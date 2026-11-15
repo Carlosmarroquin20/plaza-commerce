@@ -11,6 +11,7 @@
     <Project Path="src/Plaza.ServiceDefaults/Plaza.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Plaza.EndToEnd.Tests/Plaza.EndToEnd.Tests.csproj" />
     <Project Path="tests/Plaza.Inventory.Tests/Plaza.Inventory.Tests.csproj" />
     <Project Path="tests/Plaza.Messaging.Tests/Plaza.Messaging.Tests.csproj" />
     <Project Path="tests/Plaza.Testing/Plaza.Testing.csproj" />
