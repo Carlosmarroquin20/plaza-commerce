@@ -7,6 +7,7 @@
     <Project Path="src/Plaza.Messaging/Plaza.Messaging.csproj" />
     <Project Path="src/Plaza.Notifications/Plaza.Notifications.csproj" />
     <Project Path="src/Plaza.Orders/Plaza.Orders.csproj" />
+    <Project Path="src/Plaza.PaymentProvider/Plaza.PaymentProvider.csproj" />
     <Project Path="src/Plaza.Payments/Plaza.Payments.csproj" />
     <Project Path="src/Plaza.ServiceDefaults/Plaza.ServiceDefaults.csproj" />
   </Folder>
@@ -14,6 +15,7 @@
     <Project Path="tests/Plaza.EndToEnd.Tests/Plaza.EndToEnd.Tests.csproj" />
     <Project Path="tests/Plaza.Inventory.Tests/Plaza.Inventory.Tests.csproj" />
     <Project Path="tests/Plaza.Messaging.Tests/Plaza.Messaging.Tests.csproj" />
+    <Project Path="tests/Plaza.PaymentProvider.Tests/Plaza.PaymentProvider.Tests.csproj" />
     <Project Path="tests/Plaza.Testing/Plaza.Testing.csproj" />
     <Project Path="tests/Plaza.UnitTests/Plaza.UnitTests.csproj" />
   </Folder>
