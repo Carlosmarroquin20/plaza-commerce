@@ -140,7 +140,7 @@ internal sealed partial class KafkaConsumerService<TDbContext>(
             GetHeader(result, MessageHeaders.OccurredAt), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed)
             ? parsed
             : result.Message.Timestamp.UtcDateTime;
-        var context = new MessageContext(messageId, messageType, result.Message.Key, occurredAt);
+        var context = new MessageContext(messageId, messageType, result.Message.Key ?? "", occurredAt);
 
         for (var attempt = 1; ; attempt++)
         {
