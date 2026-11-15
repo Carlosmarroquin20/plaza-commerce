@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Plaza.Catalog/Plaza.Catalog.csproj" />
     <Project Path="src/Plaza.Contracts/Plaza.Contracts.csproj" />
     <Project Path="src/Plaza.Messaging/Plaza.Messaging.csproj" />
     <Project Path="src/Plaza.ServiceDefaults/Plaza.ServiceDefaults.csproj" />
