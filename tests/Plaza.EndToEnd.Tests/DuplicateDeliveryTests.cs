@@ -20,6 +20,7 @@ public sealed class DuplicateDeliveryTests(DuplicatingPlazaSystem plaza) : IClas
         await plaza.SetStockAsync(SeedProducts.Monitor24, 20);
         await plaza.SetStockAsync(SeedProducts.MonitorArm, 20);
         await plaza.SetStockAsync(SeedProducts.SlimKeyboard, 0);
+        await plaza.SetStockAsync(SeedProducts.MechanicalKeyboard, 5);
 
         var paid = await Task.WhenAll(Enumerable.Range(0, paidOrders).Select(_ => plaza.PlaceOrderAsync(
             "tok_test_visa", new PlaceOrderLine(SeedProducts.Monitor24, 2), new PlaceOrderLine(SeedProducts.MonitorArm, 1))));
@@ -35,6 +36,10 @@ public sealed class DuplicateDeliveryTests(DuplicatingPlazaSystem plaza) : IClas
 
             var payment = Assert.Single(await plaza.GetPaymentsAsync(order.Id));
             Assert.Equal(("Succeeded", order.TotalCents), (payment.Status, payment.AmountCents));
+
+            // The provider's ledger agrees: one charge per order, asked for more than once.
+            var charge = Assert.Single(await plaza.GetProviderChargesAsync(order.Id));
+            Assert.Equal(("Succeeded", order.TotalCents), (charge.Status, charge.AmountCents));
         }
 
         Assert.Equal("PaymentFailed", (await plaza.WaitForFinalStatusAsync(declined.Id)).Status);
@@ -44,9 +49,11 @@ public sealed class DuplicateDeliveryTests(DuplicatingPlazaSystem plaza) : IClas
         Assert.Empty(await plaza.GetPaymentsAsync(outOfStock.Id));
 
         // Stock moved exactly once per order: 20 - 8 x 2 and 20 - 8 x 1, nothing left reserved.
+        // The declined order's unit came back once, not twice.
         await Eventually.UntilAsync(
             async () => (await plaza.GetStockAsync(SeedProducts.Monitor24)) is { Available: 4, Reserved: 0 }
-                && (await plaza.GetStockAsync(SeedProducts.MonitorArm)) is { Available: 12, Reserved: 0 },
+                && (await plaza.GetStockAsync(SeedProducts.MonitorArm)) is { Available: 12, Reserved: 0 }
+                && (await plaza.GetStockAsync(SeedProducts.MechanicalKeyboard)) is { Available: 5, Reserved: 0 },
             "stock to be decremented exactly once per order");
 
         foreach (var placed in paid)
@@ -57,8 +64,9 @@ public sealed class DuplicateDeliveryTests(DuplicatingPlazaSystem plaza) : IClas
         }
 
         // Guard against a vacuous pass: prove the broker really holds every message twice.
-        // 10 orders placed, 9 payment requests (all but the out-of-stock one), 8 confirmations.
-        const int distinctOrderMessages = 10 + 9 + 8;
+        // 10 orders placed, 9 payment requests (all but the out-of-stock one), 8 confirmations
+        // and 1 cancellation (the declined order).
+        const int distinctOrderMessages = 10 + 9 + 8 + 1;
         var onTopic = await KafkaTestClient.ReadUntilAsync(
             plaza.KafkaBootstrapServers,
             Topics.Orders,
