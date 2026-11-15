@@ -4,6 +4,7 @@
     <Project Path="src/Plaza.Contracts/Plaza.Contracts.csproj" />
     <Project Path="src/Plaza.Inventory/Plaza.Inventory.csproj" />
     <Project Path="src/Plaza.Messaging/Plaza.Messaging.csproj" />
+    <Project Path="src/Plaza.Notifications/Plaza.Notifications.csproj" />
     <Project Path="src/Plaza.Orders/Plaza.Orders.csproj" />
     <Project Path="src/Plaza.Payments/Plaza.Payments.csproj" />
     <Project Path="src/Plaza.ServiceDefaults/Plaza.ServiceDefaults.csproj" />
