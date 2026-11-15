@@ -22,7 +22,7 @@ Every figure below is produced by the test suite. Reproduce with `dotnet test --
 | A message that cannot be processed does not block its partition and is not dropped | After 4 failed attempts it is on the dead-letter topic with the reason attached, and the next message is processed | `ConsumerTests.Message_that_always_fails...` |
 | A trace survives the hop through the outbox and Kafka | The handler's span has the trace id and parent span id of the request that enqueued the message | `ConsumerTests.Handler_runs_in_the_trace...` |
 
-Test suite at the end of phase 1: **91 tests, 0 failures** (55 unit, 18 messaging, 9 inventory,
+Test suite at the end of phase 1: **93 tests, 0 failures** (57 unit, 18 messaging, 9 inventory,
 9 end-to-end). Counted by the test runner's summary; one full run took 33 s on the development
 laptop, containers included.
 
@@ -199,7 +199,9 @@ Each significant decision has a record with the alternatives that were rejected:
   API; until then this must not be exposed outside a development machine.
 - **A failed payment leaves its stock reserved.** Releasing it is a compensation, added
   together with reservation expiry in the next phase.
-- **Published outbox rows and inbox rows are not purged yet**, so those tables grow.
+- **Published outbox rows and inbox rows are not purged yet**, so those tables grow. Until they
+  are, the payment token of an order also remains in the Orders outbox row and on the orders
+  topic (it is an opaque provider token, not card data).
 - **Dead-lettered messages need manual replay.** There is no tooling for it yet.
 
 ## Roadmap
