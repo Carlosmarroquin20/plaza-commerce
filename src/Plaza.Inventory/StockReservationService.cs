@@ -12,7 +12,7 @@ public enum ReservationOutcome
     InvalidRequest,
 }
 
-/// <summary>Reserves and commits stock. Every method must run inside a database transaction.</summary>
+/// <summary>Reserves, commits and releases stock. Every method must run inside a database transaction.</summary>
 public sealed class StockReservationService(InventoryDbContext db, TimeProvider timeProvider)
 {
     private const string Savepoint = "reserve_order";
@@ -85,6 +85,13 @@ public sealed class StockReservationService(InventoryDbContext db, TimeProvider 
             throw new InvalidOperationException($"Order {orderId} has no reservations to commit.");
         }
 
+        if (reservations.Any(r => r.Status == ReservationStatus.Released))
+        {
+            // The units may already belong to another order. Fail so the message is parked
+            // on the dead-letter topic instead of selling stock that is not held.
+            throw new InvalidOperationException($"Order {orderId} was cancelled; its reservations cannot be committed.");
+        }
+
         foreach (var reservation in reservations.Where(r => r.Status == ReservationStatus.Reserved))
         {
             await db.StockItems
@@ -94,5 +101,39 @@ public sealed class StockReservationService(InventoryDbContext db, TimeProvider 
                     cancellationToken);
             reservation.Status = ReservationStatus.Committed;
         }
+    }
+
+    /// <summary>
+    /// Gives the reserved units of a cancelled order back to available stock. An order that
+    /// never got a reservation (rejected, or cancelled before it was processed) is a no-op.
+    /// </summary>
+    /// <returns>The number of reservations released by this call.</returns>
+    public async Task<int> ReleaseAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        var reservations = await db.Reservations
+            .Where(r => r.OrderId == orderId)
+            .OrderBy(r => r.ProductId)
+            .ToListAsync(cancellationToken);
+
+        if (reservations.Any(r => r.Status == ReservationStatus.Committed))
+        {
+            throw new InvalidOperationException($"Order {orderId} was confirmed; its reservations cannot be released.");
+        }
+
+        var released = 0;
+        foreach (var reservation in reservations.Where(r => r.Status == ReservationStatus.Reserved))
+        {
+            await db.StockItems
+                .Where(s => s.ProductId == reservation.ProductId)
+                .ExecuteUpdateAsync(
+                    s => s
+                        .SetProperty(x => x.Available, x => x.Available + reservation.Quantity)
+                        .SetProperty(x => x.Reserved, x => x.Reserved - reservation.Quantity),
+                    cancellationToken);
+            reservation.Status = ReservationStatus.Released;
+            released++;
+        }
+
+        return released;
     }
 }
