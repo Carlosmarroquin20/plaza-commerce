@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Keeps the SHA-pinned actions current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      opentelemetry:
+        patterns: ["OpenTelemetry*", "Npgsql.OpenTelemetry"]
+      aspire:
+        patterns: ["Aspire.*", "CommunityToolkit.Aspire.*"]
+      efcore:
+        patterns: ["Microsoft.EntityFrameworkCore*", "Npgsql.EntityFrameworkCore*"]
+      testing:
+        patterns: ["xunit*", "Testcontainers*", "Microsoft.NET.Test.Sdk"]

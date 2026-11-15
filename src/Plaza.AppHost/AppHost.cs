@@ -1,0 +1,42 @@
+// Local development environment (ADR 0002): one PostgreSQL server with a database per service,
+// a Redpanda broker, the five services, and the Aspire dashboard collecting their telemetry.
+
+var builder = DistributedApplication.CreateBuilder(args);
+
+// Images are pinned by digest; the tag is kept for readability.
+var postgres = builder.AddPostgres("postgres")
+    .WithImage("postgres", "18.7-alpine")
+    .WithImageSHA256("b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015");
+
+var kafka = builder.AddRedPanda("kafka")
+    .WithImage("redpandadata/redpanda", "v26.2.7")
+    .WithImageSHA256("43545ee03966431f5451e0b3c1e651b39fbe3eb383360220311021f50133b649");
+
+// Each service reads its connection string as ConnectionStrings:<service>.
+var catalogDb = postgres.AddDatabase("catalog-db", databaseName: "catalog");
+var inventoryDb = postgres.AddDatabase("inventory-db", databaseName: "inventory");
+var ordersDb = postgres.AddDatabase("orders-db", databaseName: "orders");
+var paymentsDb = postgres.AddDatabase("payments-db", databaseName: "payments");
+var notificationsDb = postgres.AddDatabase("notifications-db", databaseName: "notifications");
+
+var catalog = builder.AddProject<Projects.Plaza_Catalog>("catalog")
+    .WithReference(catalogDb, connectionName: "catalog").WaitFor(catalogDb);
+
+builder.AddProject<Projects.Plaza_Inventory>("inventory")
+    .WithReference(inventoryDb, connectionName: "inventory").WaitFor(inventoryDb)
+    .WithReference(kafka).WaitFor(kafka);
+
+builder.AddProject<Projects.Plaza_Orders>("orders")
+    .WithReference(ordersDb, connectionName: "orders").WaitFor(ordersDb)
+    .WithReference(kafka).WaitFor(kafka)
+    .WithReference(catalog).WaitFor(catalog);
+
+builder.AddProject<Projects.Plaza_Payments>("payments")
+    .WithReference(paymentsDb, connectionName: "payments").WaitFor(paymentsDb)
+    .WithReference(kafka).WaitFor(kafka);
+
+builder.AddProject<Projects.Plaza_Notifications>("notifications")
+    .WithReference(notificationsDb, connectionName: "notifications").WaitFor(notificationsDb)
+    .WithReference(kafka).WaitFor(kafka);
+
+builder.Build().Run();

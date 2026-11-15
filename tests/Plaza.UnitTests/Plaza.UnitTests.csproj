@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Plaza.Contracts\Plaza.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Plaza.Orders\Plaza.Orders.csproj" />
+    <ProjectReference Include="..\..\src\Plaza.Payments\Plaza.Payments.csproj" />
+  </ItemGroup>
+
+</Project>
