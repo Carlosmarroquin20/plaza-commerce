@@ -165,6 +165,6 @@ public static partial class OrderEndpoints
         order.CreatedAt,
         order.UpdatedAt);
 
-    [GeneratedRegex("^tok_[A-Za-z0-9_]{4,64}$")]
+    [GeneratedRegex(@"\Atok_[A-Za-z0-9_]{4,64}\z")] // \z, not $: $ would accept a trailing newline
     private static partial Regex PaymentTokenPattern();
 }

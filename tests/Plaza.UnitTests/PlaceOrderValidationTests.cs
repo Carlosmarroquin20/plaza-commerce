@@ -22,6 +22,7 @@ public sealed class PlaceOrderValidationTests
     [InlineData("4242424242424242")] // a card number is not a token
     [InlineData("4242 4242 4242 4242")]
     [InlineData("tok_test_ok; DROP TABLE orders")]
+    [InlineData("tok_test_ok\n")] // a trailing newline must not slip past the anchor
     [InlineData("tok_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")] // too long
     public void Anything_that_is_not_token_shaped_is_rejected(string? token) =>
         Assert.Contains("paymentToken", OrderEndpoints.Validate(Valid() with { PaymentToken = token }));
