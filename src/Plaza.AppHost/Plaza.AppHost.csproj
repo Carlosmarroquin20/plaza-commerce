@@ -1,0 +1,25 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- Aspire pulls platform-specific orchestration binaries, so a lock file written on one
+         OS fails locked restore on another (ADR 0002). -->
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);EnableGenerateDocumentationFile;ASPIRE010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Redpanda" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Plaza.Catalog\Plaza.Catalog.csproj" />
+    <ProjectReference Include="..\Plaza.Inventory\Plaza.Inventory.csproj" />
+    <ProjectReference Include="..\Plaza.Notifications\Plaza.Notifications.csproj" />
+    <ProjectReference Include="..\Plaza.Orders\Plaza.Orders.csproj" />
+    <ProjectReference Include="..\Plaza.Payments\Plaza.Payments.csproj" />
+  </ItemGroup>
+
+</Project>
