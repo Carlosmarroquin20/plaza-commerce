@@ -22,6 +22,14 @@ builder.Services.AddHttpClient<CatalogClient>(http =>
     http.Timeout = TimeSpan.FromSeconds(5);
 });
 
+builder.Services.AddOptions<CheckoutOptions>()
+    .BindConfiguration("Checkout")
+    .Validate(o => o.ReservationTtl > TimeSpan.Zero, "Checkout:ReservationTtl must be positive.")
+    .Validate(o => o.ExpirySweepInterval > TimeSpan.Zero, "Checkout:ExpirySweepInterval must be positive.")
+    .Validate(o => o.ExpiryBatchSize >= 1, "Checkout:ExpiryBatchSize must be at least 1.")
+    .ValidateOnStart();
+builder.Services.AddHostedService<OrderExpiryService>();
+
 builder.Services.AddPlazaMessaging<OrdersDbContext>("orders")
     .Publishes(Topics.Orders)
     .Subscribe(Topics.Inventory)

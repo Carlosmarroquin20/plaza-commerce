@@ -127,6 +127,10 @@ namespace Plaza.Orders.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("customer_id");
 
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
                     b.Property<string>("FailureReason")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
@@ -162,6 +166,10 @@ namespace Plaza.Orders.Data.Migrations
 
                     b.HasIndex("CustomerId")
                         .HasDatabaseName("ix_orders_customer_id");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_orders_expires_at")
+                        .HasFilter("status IN ('Pending', 'AwaitingPayment')");
 
                     b.ToTable("orders", null, t =>
                         {

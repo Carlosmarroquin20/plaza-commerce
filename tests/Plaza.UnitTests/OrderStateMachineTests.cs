@@ -7,6 +7,8 @@ public sealed class OrderStateMachineTests
 {
     private static readonly DateTimeOffset Now = new(2026, 11, 15, 12, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset Later = Now.AddMinutes(1);
+    private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(15);
+    private static readonly DateTimeOffset AfterDeadline = Now + Ttl;
 
     private static Order NewOrder() => Order.Place(
         Guid.NewGuid(),
@@ -16,7 +18,8 @@ public sealed class OrderStateMachineTests
             new OrderItem { ProductId = Guid.NewGuid(), ProductName = "Desk", UnitPriceCents = 28900, Quantity = 1 },
             new OrderItem { ProductId = Guid.NewGuid(), ProductName = "Lamp", UnitPriceCents = 3200, Quantity = 2 },
         ],
-        Now);
+        Now,
+        Ttl);
 
     private static Order InStatus(OrderStatus status)
     {
@@ -39,6 +42,10 @@ public sealed class OrderStateMachineTests
                 order.MarkStockReserved(Now, out _);
                 order.MarkPaymentFailed("card_declined", Now);
                 break;
+            case OrderStatus.Expired:
+                order.MarkStockReserved(Now, out _);
+                order.Expire(AfterDeadline);
+                break;
         }
 
         Assert.Equal(status, order.Status);
@@ -57,7 +64,7 @@ public sealed class OrderStateMachineTests
 
     [Fact]
     public void Order_without_items_is_refused() =>
-        Assert.Throws<ArgumentException>(() => Order.Place(Guid.NewGuid(), "tok_test_ok", "USD", [], Now));
+        Assert.Throws<ArgumentException>(() => Order.Place(Guid.NewGuid(), "tok_test_ok", "USD", [], Now, Ttl));
 
     [Theory]
     [InlineData(0, 100)]
@@ -69,7 +76,8 @@ public sealed class OrderStateMachineTests
             "tok_test_ok",
             "USD",
             [new OrderItem { ProductId = Guid.NewGuid(), ProductName = "x", UnitPriceCents = price, Quantity = quantity }],
-            Now));
+            Now,
+            Ttl));
 
     [Fact]
     public void Total_overflow_fails_instead_of_wrapping() =>
@@ -78,7 +86,8 @@ public sealed class OrderStateMachineTests
             "tok_test_ok",
             "USD",
             [new OrderItem { ProductId = Guid.NewGuid(), ProductName = "x", UnitPriceCents = long.MaxValue, Quantity = 2 }],
-            Now));
+            Now,
+            Ttl));
 
     [Fact]
     public void Happy_path_reaches_confirmed()
@@ -192,6 +201,71 @@ public sealed class OrderStateMachineTests
     [InlineData(OrderStatus.PaymentFailed)]
     public void Stock_rejection_after_reservation_is_invalid(OrderStatus status) =>
         Assert.Throws<InvalidOrderTransitionException>(() => InStatus(status).MarkStockRejected("x", Later));
+
+    [Fact]
+    public void Deadline_is_set_when_the_order_is_placed() =>
+        Assert.Equal(Now + Ttl, NewOrder().ExpiresAt);
+
+    [Fact]
+    public void Order_needs_a_positive_time_to_complete() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => Order.Place(
+            Guid.NewGuid(),
+            "tok_test_ok",
+            "USD",
+            [new OrderItem { ProductId = Guid.NewGuid(), ProductName = "x", UnitPriceCents = 1, Quantity = 1 }],
+            Now,
+            TimeSpan.Zero));
+
+    [Theory]
+    [InlineData(OrderStatus.Pending)]
+    [InlineData(OrderStatus.AwaitingPayment)]
+    public void Order_still_waiting_at_its_deadline_expires(OrderStatus status)
+    {
+        var order = InStatus(status);
+
+        Assert.True(order.Expire(AfterDeadline));
+
+        Assert.Equal(OrderStatus.Expired, order.Status);
+        Assert.Equal("expired", order.FailureReason);
+        Assert.Null(order.PaymentToken);
+    }
+
+    [Theory]
+    [InlineData(OrderStatus.Pending)]
+    [InlineData(OrderStatus.AwaitingPayment)]
+    public void Order_is_not_expired_before_its_deadline(OrderStatus status)
+    {
+        var order = InStatus(status);
+
+        Assert.False(order.Expire(AfterDeadline.AddTicks(-1)));
+        Assert.Equal(status, order.Status);
+    }
+
+    [Theory]
+    [InlineData(OrderStatus.Confirmed)]
+    [InlineData(OrderStatus.Rejected)]
+    [InlineData(OrderStatus.PaymentFailed)]
+    [InlineData(OrderStatus.Expired)]
+    public void Finished_order_never_expires(OrderStatus status)
+    {
+        var order = InStatus(status);
+        var reason = order.FailureReason;
+
+        Assert.False(order.Expire(AfterDeadline.AddDays(1)));
+        Assert.Equal(status, order.Status);
+        Assert.Equal(reason, order.FailureReason);
+    }
+
+    // Replies that arrive after the order expired are late, not contradictory: the
+    // cancellation already undoes whatever they report.
+    [Fact]
+    public void Replies_after_expiry_are_ignored()
+    {
+        Assert.False(InStatus(OrderStatus.Expired).MarkStockReserved(Later, out _));
+        Assert.False(InStatus(OrderStatus.Expired).MarkStockRejected("insufficient_stock", Later));
+        Assert.False(InStatus(OrderStatus.Expired).MarkPaymentSucceeded(Later));
+        Assert.False(InStatus(OrderStatus.Expired).MarkPaymentFailed("card_declined", Later));
+    }
 
     [Fact]
     public void Stock_reserved_after_rejection_is_invalid() =>
