@@ -1,6 +1,6 @@
 using System.Net;
 using Plaza.Orders;
-using Plaza.Payments;
+using Plaza.PaymentProvider;
 using Plaza.Testing;
 using Xunit;
 
@@ -64,7 +64,7 @@ public sealed class CheckoutFlowTests(PlazaSystem plaza) : IClassFixture<PlazaSy
         await plaza.SetStockAsync(SeedProducts.TaskChair, 10);
 
         var placed = await plaza.PlaceOrderAsync(
-            SimulatedPaymentProvider.DeclinedToken, new PlaceOrderLine(SeedProducts.TaskChair, 1));
+            ChargeSimulator.DeclinedToken, new PlaceOrderLine(SeedProducts.TaskChair, 1));
         var order = await plaza.WaitForFinalStatusAsync(placed.Id);
 
         Assert.Equal(("PaymentFailed", "card_declined"), (order.Status, order.FailureReason));

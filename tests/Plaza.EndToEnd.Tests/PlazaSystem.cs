@@ -10,6 +10,8 @@ using Plaza.Messaging.Kafka;
 using Plaza.Notifications.Data;
 using Plaza.Orders;
 using Plaza.Orders.Data;
+using Plaza.PaymentProvider;
+using Plaza.PaymentProvider.Data;
 using Plaza.Payments;
 using Plaza.Payments.Data;
 using Plaza.Testing;
@@ -18,8 +20,8 @@ using Xunit;
 namespace Plaza.EndToEnd.Tests;
 
 /// <summary>
-/// The five real services running in this process against a real PostgreSQL and a real
-/// Redpanda. Only the HTTP transport is in-memory; messaging, persistence and the service
+/// The five real services and the simulated payment provider running in this process against
+/// a real PostgreSQL and a real Redpanda. Only the HTTP transport is in-memory; messaging, persistence and the service
 /// code are exactly what runs in production.
 /// </summary>
 public class PlazaSystem : IAsyncLifetime
@@ -42,6 +44,9 @@ public class PlazaSystem : IAsyncLifetime
 
     public HttpClient Notifications { get; private set; } = null!;
 
+    /// <summary>The simulated payment provider's own API: its ledger is the truth about money.</summary>
+    public HttpClient Provider { get; private set; } = null!;
+
     public async ValueTask InitializeAsync()
     {
         await _containers.StartAsync();
@@ -49,7 +54,14 @@ public class PlazaSystem : IAsyncLifetime
         var catalog = Create<CatalogDbContext>("catalog");
         Catalog = catalog.CreateClient();
         Inventory = Create<InventoryDbContext>("inventory").CreateClient();
-        Payments = Create<PaymentsDbContext>("payments").CreateClient();
+        var provider = Create<ProviderDbContext>("payment-provider");
+        Provider = provider.CreateClient();
+
+        // Payments calls the provider over HTTP: route that client to the in-memory provider.
+        Payments = Create<PaymentsDbContext>("payments", services => services
+            .AddHttpClient<IPaymentProvider, HttpPaymentProvider>()
+            .ConfigurePrimaryHttpMessageHandler(() => provider.Server.CreateHandler()))
+            .CreateClient();
         Notifications = Create<NotificationsDbContext>("notifications").CreateClient();
 
         // Orders calls Catalog over HTTP: route that client to the in-memory Catalog server.
@@ -79,6 +91,7 @@ public class PlazaSystem : IAsyncLifetime
             builder.UseSetting($"ConnectionStrings:{service}", _containers.ConnectionString(service));
             builder.UseSetting("ConnectionStrings:kafka", _containers.KafkaBootstrapServers);
             builder.UseSetting("services:catalog:http:0", "http://localhost");
+            builder.UseSetting("services:payment-provider:http:0", "http://localhost");
             builder.UseSetting("Seed:Enabled", "true");
             builder.UseSetting("Messaging:OutboxPollInterval", "00:00:00.020");
             builder.ConfigureTestServices(services =>
@@ -100,7 +113,7 @@ public class PlazaSystem : IAsyncLifetime
         var original = services.SingleOrDefault(d => d.ServiceType == typeof(IMessageProducer));
         if (original is null)
         {
-            return; // Catalog does not use messaging.
+            return; // Catalog and the payment provider do not use messaging.
         }
 
         services.Remove(original);
@@ -149,6 +162,10 @@ public class PlazaSystem : IAsyncLifetime
 
     public async Task<List<PaymentResponse>> GetPaymentsAsync(Guid orderId) =>
         (await Payments.GetFromJsonAsync<List<PaymentResponse>>($"/payments/by-order/{orderId}"))!;
+
+    /// <summary>Every charge the provider holds for an order, whatever key it was made with.</summary>
+    public async Task<List<ChargeResponse>> GetProviderChargesAsync(Guid orderId) =>
+        (await Provider.GetFromJsonAsync<List<ChargeResponse>>($"/charges?reference={orderId:D}"))!;
 
     public async Task<List<NotificationResponse>> GetNotificationsAsync(Guid orderId) =>
         (await Notifications.GetFromJsonAsync<List<NotificationResponse>>($"/notifications/by-order/{orderId}"))!;

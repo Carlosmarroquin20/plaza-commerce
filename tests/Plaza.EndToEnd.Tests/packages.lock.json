@@ -344,6 +344,15 @@
           "Plaza.ServiceDefaults": "[1.0.0, )"
         }
       },
+      "plaza.paymentprovider": {
+        "type": "Project",
+        "dependencies": {
+          "EFCore.NamingConventions": "[10.0.1, )",
+          "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[10.0.15, )",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
+          "Plaza.ServiceDefaults": "[1.0.0, )"
+        }
+      },
       "plaza.payments": {
         "type": "Project",
         "dependencies": {

@@ -1,7 +1,7 @@
 using Plaza.Contracts;
 using Plaza.Messaging;
 using Plaza.Orders;
-using Plaza.Payments;
+using Plaza.PaymentProvider;
 using Plaza.Testing;
 using Xunit;
 
@@ -24,7 +24,7 @@ public sealed class DuplicateDeliveryTests(DuplicatingPlazaSystem plaza) : IClas
         var paid = await Task.WhenAll(Enumerable.Range(0, paidOrders).Select(_ => plaza.PlaceOrderAsync(
             "tok_test_visa", new PlaceOrderLine(SeedProducts.Monitor24, 2), new PlaceOrderLine(SeedProducts.MonitorArm, 1))));
         var declined = await plaza.PlaceOrderAsync(
-            SimulatedPaymentProvider.DeclinedToken, new PlaceOrderLine(SeedProducts.MechanicalKeyboard, 1));
+            ChargeSimulator.DeclinedToken, new PlaceOrderLine(SeedProducts.MechanicalKeyboard, 1));
         var outOfStock = await plaza.PlaceOrderAsync(
             "tok_test_visa", new PlaceOrderLine(SeedProducts.SlimKeyboard, 1));
 
