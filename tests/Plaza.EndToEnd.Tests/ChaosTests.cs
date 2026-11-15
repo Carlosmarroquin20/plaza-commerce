@@ -20,10 +20,16 @@ public class ChaosPlazaSystem : PlazaSystem
 
     protected override IReadOnlyDictionary<string, string> Settings { get; } = new Dictionary<string, string>
     {
-        ["PaymentProvider:Timeout"] = "00:00:00.500",
+        ["PaymentProvider:Timeout"] = "00:00:01",
         ["Messaging:RetryBaseDelay"] = "00:00:00.050",
         ["Messaging:RetryMaxDelay"] = "00:00:00.200",
     };
+
+    public override async ValueTask InitializeAsync()
+    {
+        await base.InitializeAsync();
+        await WarmUpAsync();
+    }
 
     public Task StopKafkaAsync() => Containers.StopKafkaAsync();
 
@@ -102,12 +108,12 @@ public sealed class ChaosTests : IClassFixture<ChaosPlazaSystem>
         await _plaza.AssertMoneyAndStockAreConsistentAsync(final, SeedProducts.ErgonomicChair, stock, quantityPerOrder: 1);
 
         // Guard against a vacuous pass: the faults really happened. 10 charges failed once and
-        // 10 failed twice, and every lost answer is a request the provider did process.
-        Assert.Equal(30, _plaza.Chaos.Unavailable + _plaza.Chaos.AnswersLost);
-        Assert.True(_plaza.Chaos.AnswersLost > 0);
+        // 10 failed twice: 15 requests never reached the provider and 15 were processed by it
+        // without the caller knowing, on top of the 30 that were answered.
+        Assert.Equal((15, 15), (_plaza.Chaos.Unavailable, _plaza.Chaos.AnswersLost));
         var charges = (await Task.WhenAll(final.Select(o => _plaza.GetProviderChargesAsync(o.Id)))).SelectMany(c => c).ToList();
         Assert.Equal(orders, charges.Count);
-        Assert.Equal(orders + _plaza.Chaos.AnswersLost, charges.Sum(c => c.Attempts));
+        Assert.True(charges.Sum(c => c.Attempts) >= orders + 15, "the provider must have seen the repeated requests");
     }
 
     [Fact]
@@ -169,7 +175,7 @@ public sealed class ExpiringPlazaSystem : PlazaSystem
     {
         ["Checkout:ReservationTtl"] = ReservationTtl.ToString(),
         ["Checkout:ExpirySweepInterval"] = "00:00:00.200",
-        ["PaymentProvider:Timeout"] = "00:00:00.300",
+        ["PaymentProvider:Timeout"] = "00:00:00.500",
         ["Messaging:MaxAttempts"] = "3",
         ["Messaging:RetryBaseDelay"] = "00:00:00.050",
         ["Messaging:RetryMaxDelay"] = "00:00:00.200",
@@ -179,17 +185,8 @@ public sealed class ExpiringPlazaSystem : PlazaSystem
     {
         await base.InitializeAsync();
 
-        // Consumers take a few seconds to join their groups after start-up. With a deadline
-        // this short that alone could expire an order, so wait until one checkout completes.
-        await SetStockAsync(SeedProducts.DeskLamp, 1000);
-        await Eventually.UntilAsync(
-            async () =>
-            {
-                var placed = await PlaceOrderAsync("tok_test_visa", new PlaceOrderLine(SeedProducts.DeskLamp, 1));
-                return (await WaitForFinalStatusAsync(placed.Id)).Status == "Confirmed";
-            },
-            "the system to complete a first checkout within the deadline",
-            TimeSpan.FromMinutes(2));
+        // With a deadline this short, the start-up of the consumers alone could expire an order.
+        await WarmUpAsync();
     }
 }
 

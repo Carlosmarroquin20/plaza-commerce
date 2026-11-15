@@ -91,6 +91,24 @@ public class PlazaSystem : IAsyncLifetime
             .CreateClient();
     }
 
+    /// <summary>
+    /// Runs checkouts until one is confirmed. After start-up the consumers need a few seconds to
+    /// join their groups and every service makes its first database and HTTP calls; fixtures
+    /// with short timeouts call this so that those one-off delays are not mistaken for faults.
+    /// </summary>
+    protected async Task WarmUpAsync()
+    {
+        await SetStockAsync(SeedProducts.DeskLamp, 1000);
+        await Eventually.UntilAsync(
+            async () =>
+            {
+                var placed = await PlaceOrderAsync("tok_test_visa", new PlaceOrderLine(SeedProducts.DeskLamp, 1));
+                return (await WaitForFinalStatusAsync(placed.Id)).Status == "Confirmed";
+            },
+            "the system to complete a first checkout",
+            TimeSpan.FromMinutes(2));
+    }
+
     public async ValueTask DisposeAsync()
     {
         foreach (var factory in _factories)
