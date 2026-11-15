@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Plaza.PaymentProvider.Data;
 
 namespace Plaza.PaymentProvider;
@@ -201,17 +200,19 @@ public static partial class ChargeEndpoints
     /// <summary>Inserts the row unless its idempotency key already exists.</summary>
     private static async Task<bool> TryInsertAsync(ProviderDbContext db, Charge charge, CancellationToken cancellationToken)
     {
-        db.Charges.Add(charge);
-        try
-        {
-            await db.SaveChangesAsync(cancellationToken);
-            return true;
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
-        {
-            db.ChangeTracker.Clear();
-            return false;
-        }
+        // A repeated key is an expected case, not an error: ON CONFLICT keeps it out of the
+        // error log and lets the unique index decide between concurrent requests.
+        var status = charge.Status.ToString();
+        var inserted = await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO charges (
+                id, idempotency_key, request_hash, reference, amount_cents, currency,
+                status, decline_reason, attempts, created_at, updated_at)
+            VALUES (
+                {charge.Id}, {charge.IdempotencyKey}, {charge.RequestHash}, {charge.Reference}, {charge.AmountCents}, {charge.Currency},
+                {status}, {charge.DeclineReason}, {charge.Attempts}, {charge.CreatedAt}, {charge.UpdatedAt})
+            ON CONFLICT (idempotency_key) DO NOTHING
+            """, cancellationToken);
+        return inserted == 1;
     }
 
     /// <summary>Fingerprint of a request. The token itself is never stored.</summary>
