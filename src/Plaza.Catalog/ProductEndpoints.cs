@@ -11,6 +11,7 @@ public sealed record ProductPage(IReadOnlyList<ProductResponse> Items, int Page,
 
 public static class ProductEndpoints
 {
+    private const int MaxPage = 100_000; // keeps (page - 1) * pageSize far from overflow
     private const int MaxPageSize = 100;
     private const int MaxBatchSize = 50;
 
@@ -26,11 +27,11 @@ public static class ProductEndpoints
     private static async Task<Results<Ok<ProductPage>, ValidationProblem>> ListAsync(
         CatalogDbContext db, CancellationToken cancellationToken, int page = 1, int pageSize = 20)
     {
-        if (page < 1 || pageSize is < 1 or > MaxPageSize)
+        if (page is < 1 or > MaxPage || pageSize is < 1 or > MaxPageSize)
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
-                ["paging"] = [$"page must be at least 1 and pageSize between 1 and {MaxPageSize}."],
+                ["paging"] = [$"page must be between 1 and {MaxPage} and pageSize between 1 and {MaxPageSize}."],
             });
         }
 
