@@ -17,6 +17,11 @@ using Plaza.Payments.Data;
 using Plaza.Testing;
 using Xunit;
 
+// Each test class starts its own PostgreSQL, Redpanda and six services. Running the classes
+// one after another keeps a small machine (a laptop, a CI runner) from starving the containers:
+// in parallel, PostgreSQL was seen taking longer than the 15 s connection timeout to accept.
+[assembly: Xunit.v3.Parallelization(Mode = Xunit.Sdk.ParallelMode.None)]
+
 namespace Plaza.EndToEnd.Tests;
 
 /// <summary>
@@ -26,8 +31,23 @@ namespace Plaza.EndToEnd.Tests;
 /// </summary>
 public class PlazaSystem : IAsyncLifetime
 {
-    private readonly InfrastructureFixture _containers = new();
+    private readonly InfrastructureFixture _containers;
     private readonly List<IAsyncDisposable> _factories = [];
+
+    public PlazaSystem()
+        : this(new InfrastructureFixture())
+    {
+    }
+
+    protected PlazaSystem(InfrastructureFixture containers) => _containers = containers;
+
+    protected InfrastructureFixture Containers => _containers;
+
+    /// <summary>Configuration applied to every service on top of the defaults.</summary>
+    protected virtual IReadOnlyDictionary<string, string> Settings { get; } = new Dictionary<string, string>();
+
+    /// <summary>Faults injected between Payments and the payment provider. None by default.</summary>
+    public ProviderChaos Chaos { get; } = new();
 
     /// <summary>When true, every service publishes each message twice.</summary>
     protected virtual bool DuplicateEveryMessage => false;
@@ -47,7 +67,7 @@ public class PlazaSystem : IAsyncLifetime
     /// <summary>The simulated payment provider's own API: its ledger is the truth about money.</summary>
     public HttpClient Provider { get; private set; } = null!;
 
-    public async ValueTask InitializeAsync()
+    public virtual async ValueTask InitializeAsync()
     {
         await _containers.StartAsync();
 
@@ -60,7 +80,7 @@ public class PlazaSystem : IAsyncLifetime
         // Payments calls the provider over HTTP: route that client to the in-memory provider.
         Payments = Create<PaymentsDbContext>("payments", services => services
             .AddHttpClient<IPaymentProvider, HttpPaymentProvider>()
-            .ConfigurePrimaryHttpMessageHandler(() => provider.Server.CreateHandler()))
+            .ConfigurePrimaryHttpMessageHandler(() => new ChaosHandler(Chaos, provider.Server.CreateHandler())))
             .CreateClient();
         Notifications = Create<NotificationsDbContext>("notifications").CreateClient();
 
@@ -94,6 +114,11 @@ public class PlazaSystem : IAsyncLifetime
             builder.UseSetting("services:payment-provider:http:0", "http://localhost");
             builder.UseSetting("Seed:Enabled", "true");
             builder.UseSetting("Messaging:OutboxPollInterval", "00:00:00.020");
+            foreach (var (key, value) in Settings)
+            {
+                builder.UseSetting(key, value);
+            }
+
             builder.ConfigureTestServices(services =>
             {
                 configure?.Invoke(services);
@@ -134,7 +159,7 @@ public class PlazaSystem : IAsyncLifetime
 
     // ---- Helpers shared by the tests -------------------------------------------------------
 
-    public static readonly string[] FinalStatuses = ["Confirmed", "Rejected", "PaymentFailed"];
+    public static readonly string[] FinalStatuses = ["Confirmed", "Rejected", "PaymentFailed", "Expired"];
 
     public async Task SetStockAsync(Guid productId, int available)
     {
@@ -155,10 +180,14 @@ public class PlazaSystem : IAsyncLifetime
         return (await response.Content.ReadFromJsonAsync<OrderResponse>())!;
     }
 
-    public Task<OrderResponse> WaitForFinalStatusAsync(Guid orderId) => Eventually.GetAsync(
+    public async Task<OrderResponse> GetOrderAsync(Guid orderId) =>
+        (await Orders.GetFromJsonAsync<OrderResponse>($"/orders/{orderId}"))!;
+
+    public Task<OrderResponse> WaitForFinalStatusAsync(Guid orderId, TimeSpan? timeout = null) => Eventually.GetAsync(
         async () => (await Orders.GetFromJsonAsync<OrderResponse>($"/orders/{orderId}"))!,
         order => FinalStatuses.Contains(order.Status),
-        $"order {orderId} to reach a final status");
+        $"order {orderId} to reach a final status",
+        timeout);
 
     public async Task<List<PaymentResponse>> GetPaymentsAsync(Guid orderId) =>
         (await Payments.GetFromJsonAsync<List<PaymentResponse>>($"/payments/by-order/{orderId}"))!;
@@ -166,6 +195,38 @@ public class PlazaSystem : IAsyncLifetime
     /// <summary>Every charge the provider holds for an order, whatever key it was made with.</summary>
     public async Task<List<ChargeResponse>> GetProviderChargesAsync(Guid orderId) =>
         (await Provider.GetFromJsonAsync<List<ChargeResponse>>($"/charges?reference={orderId:D}"))!;
+
+    /// <summary>
+    /// The two guarantees of the checkout, checked against the provider's ledger and the stock:
+    /// a confirmed order holds exactly one charge for its total, any other order holds none,
+    /// and the stock went down by exactly what was confirmed with nothing left reserved.
+    /// </summary>
+    public async Task AssertMoneyAndStockAreConsistentAsync(
+        IReadOnlyCollection<OrderResponse> orders, Guid productId, int initialStock, int quantityPerOrder)
+    {
+        foreach (var order in orders)
+        {
+            Assert.Contains(order.Status, FinalStatuses);
+
+            if (order.Status == "Confirmed")
+            {
+                var held = Assert.Single(await GetProviderChargesAsync(order.Id), c => c.Status == "Succeeded");
+                Assert.Equal(order.TotalCents, held.AmountCents);
+            }
+            else
+            {
+                // A cancelled order may have been charged, but then the refund must follow.
+                await Eventually.UntilAsync(
+                    async () => (await GetProviderChargesAsync(order.Id)).All(c => c.Status != "Succeeded"),
+                    $"no money to be held for {order.Status} order {order.Id}");
+            }
+        }
+
+        var sold = orders.Count(o => o.Status == "Confirmed") * quantityPerOrder;
+        await Eventually.UntilAsync(
+            async () => (await GetStockAsync(productId)) is { Reserved: 0 } stock && stock.Available == initialStock - sold,
+            $"stock of {productId} to be {initialStock - sold} available and 0 reserved");
+    }
 
     public async Task<List<NotificationResponse>> GetNotificationsAsync(Guid orderId) =>
         (await Notifications.GetFromJsonAsync<List<NotificationResponse>>($"/notifications/by-order/{orderId}"))!;
