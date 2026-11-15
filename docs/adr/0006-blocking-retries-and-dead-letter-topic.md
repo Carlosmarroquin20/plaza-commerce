@@ -12,8 +12,9 @@ the first kind without spinning, and must not let the second kind block a partit
 ## Decision
 
 - A failed message is retried **in place**: the consumer waits and calls the handler again, up
-  to `MaxAttempts` (default 5), with exponential backoff and full jitter
-  (base 200 ms, capped at 5 s). Each attempt runs in a new transaction.
+  to `MaxAttempts` (default 5), with exponential backoff and equal jitter
+  (base 200 ms, capped at 5 s; half of each delay is fixed, half random, so a retry is never
+  immediate). Each attempt runs in a new transaction.
 - While a message is being retried the consumer does not move on, so messages for the same key
   are never processed out of order because of a retry.
 - When attempts are exhausted, the original message (key, value, headers) is produced to
