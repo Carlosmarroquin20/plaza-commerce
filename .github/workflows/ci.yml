@@ -38,7 +38,9 @@ jobs:
         run: dotnet build Plaza.slnx --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test Plaza.slnx --configuration Release --no-build --logger "trx" --results-directory test-results
+        run: >-
+          dotnet test --solution Plaza.slnx --configuration Release --no-build
+          --report-xunit-trx --results-directory test-results --results-directory-layout per-module
 
       - name: Upload test results
         if: always()

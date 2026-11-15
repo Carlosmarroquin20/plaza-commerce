@@ -8,9 +8,9 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <InvariantGlobalization>true</InvariantGlobalization>
 
-    <!-- Required for IDE0005 (unused usings) to run on build; CS1591 would demand docs on every public member. -->
+    <!-- Required for IDE0005 (unused usings) to run on build; CS1591/CS1573 would demand docs on every public member and parameter. -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
 
     <!-- Reproducible restores: CI runs `dotnet restore -locked-mode`. -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
