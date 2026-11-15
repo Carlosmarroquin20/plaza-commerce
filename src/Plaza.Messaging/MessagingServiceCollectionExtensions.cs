@@ -27,6 +27,7 @@ public static class MessagingServiceCollectionExtensions
         // Read configuration when options are first resolved, not at registration, so that
         // hosts which add configuration late (tests) are honoured.
         services.AddOptions<MessagingOptions>()
+            .BindConfiguration("Messaging")
             .Configure<IConfiguration>((options, configuration) =>
             {
                 options.ServiceName = serviceName;
