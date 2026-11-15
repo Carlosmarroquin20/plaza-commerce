@@ -4,6 +4,7 @@
     <Project Path="src/Plaza.Contracts/Plaza.Contracts.csproj" />
     <Project Path="src/Plaza.Inventory/Plaza.Inventory.csproj" />
     <Project Path="src/Plaza.Messaging/Plaza.Messaging.csproj" />
+    <Project Path="src/Plaza.Orders/Plaza.Orders.csproj" />
     <Project Path="src/Plaza.ServiceDefaults/Plaza.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
