@@ -128,6 +128,16 @@ public sealed class OrderStateMachineTests
         Assert.Equal("card_declined", order.FailureReason);
     }
 
+    [Fact]
+    public void Oversized_failure_reason_is_truncated_instead_of_failing_the_transition()
+    {
+        var order = InStatus(OrderStatus.AwaitingPayment);
+
+        order.MarkPaymentFailed(new string('x', 500), Later);
+
+        Assert.Equal(Order.MaxFailureReasonLength, order.FailureReason!.Length);
+    }
+
     // A reply for a step the order already took is a duplicate or a late delivery: ignore it.
     [Theory]
     [InlineData(OrderStatus.AwaitingPayment)]

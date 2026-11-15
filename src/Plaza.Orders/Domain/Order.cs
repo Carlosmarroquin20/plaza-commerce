@@ -48,6 +48,8 @@ public sealed class OrderItem
 /// </summary>
 public sealed class Order
 {
+    public const int MaxFailureReasonLength = 128;
+
     private readonly List<OrderItem> _items = [];
 
     private Order()
@@ -134,7 +136,7 @@ public sealed class Order
         {
             case OrderStatus.Pending:
                 PaymentToken = null;
-                FailureReason = reason;
+                FailureReason = Truncate(reason);
                 MoveTo(OrderStatus.Rejected, now);
                 return true;
             case OrderStatus.Rejected:
@@ -163,7 +165,7 @@ public sealed class Order
         switch (Status)
         {
             case OrderStatus.AwaitingPayment:
-                FailureReason = reason;
+                FailureReason = Truncate(reason);
                 MoveTo(OrderStatus.PaymentFailed, now);
                 return true;
             case OrderStatus.PaymentFailed:
@@ -172,6 +174,10 @@ public sealed class Order
                 throw new InvalidOrderTransitionException(Id, Status, nameof(MarkPaymentFailed));
         }
     }
+
+    /// <summary>Reasons come from other services; never let an oversized one fail the transition.</summary>
+    private static string Truncate(string reason) =>
+        reason.Length <= MaxFailureReasonLength ? reason : reason[..MaxFailureReasonLength];
 
     private void MoveTo(OrderStatus status, DateTimeOffset now)
     {

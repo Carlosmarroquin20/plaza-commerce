@@ -18,7 +18,7 @@ public sealed class OrdersDbContext(DbContextOptions<OrdersDbContext> options) :
             e.Property(o => o.Status).HasConversion<string>().HasMaxLength(32);
             e.Property(o => o.Currency).HasMaxLength(3).IsFixedLength();
             e.Property(o => o.PaymentToken).HasMaxLength(128);
-            e.Property(o => o.FailureReason).HasMaxLength(128);
+            e.Property(o => o.FailureReason).HasMaxLength(Order.MaxFailureReasonLength);
             e.Property(o => o.Version).IsRowVersion();
             e.HasIndex(o => o.CustomerId);
             e.ToTable(t => t.HasCheckConstraint("ck_orders_total_not_negative", "total_cents >= 0"));
