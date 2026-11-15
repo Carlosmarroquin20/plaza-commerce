@@ -64,6 +64,12 @@ retried, finds the order expired and is ignored.
 - A compensation that keeps failing is dead-lettered like any other message. A void that cannot
   reach the provider within the retry budget therefore needs a replay of the dead-letter topic;
   there is no tooling for that yet, and no reconciliation job against the provider's ledger.
+- "The cancellation comes last" depends on Orders publishing an order's messages in the order
+  it wrote them. One outbox publisher does (it reads by sequence). Several instances of Orders
+  could, after a long broker outage, publish an order's `OrderCancelled` before its
+  `OrderPlaced`; Payments is safe either way because the void blocks the key, but Inventory
+  would then reserve stock that nobody releases. Running more than one instance of Orders needs
+  the outbox to preserve order per key first.
 - Orders learns nothing about a refund: the order says `Expired`, the money is in the
   provider's ledger and in the Payments record when there is one.
 
