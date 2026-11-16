@@ -14,7 +14,7 @@ using Plaza.Catalog.Data;
 namespace Plaza.Catalog.Data.Migrations
 {
     [DbContext(typeof(CatalogDbContext))]
-    [Migration("20261116012450_AddProductSearch")]
+    [Migration("20261116014234_AddProductSearch")]
     partial class AddProductSearch
     {
         /// <inheritdoc />
@@ -72,8 +72,7 @@ namespace Plaza.Catalog.Data.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("tsvector")
                         .HasColumnName("search_vector")
-                        .HasAnnotation("Npgsql:TsVectorConfig", "english")
-                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Name", "Description", "Category" });
+                        .HasComputedColumnSql("setweight(to_tsvector('english', name), 'A') ||\nsetweight(to_tsvector('english', category), 'B') ||\nsetweight(to_tsvector('english', description), 'C')", true);
 
                     b.Property<string>("Sku")
                         .IsRequired()

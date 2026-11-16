@@ -25,7 +25,7 @@ public sealed class Product
     /// <summary>Embedding of name, description and category; null until the product is indexed.</summary>
     public Vector? Embedding { get; set; }
 
-    /// <summary>Full-text index of name, description and category, maintained by PostgreSQL.</summary>
+    /// <summary>Weighted full-text index of name, category and description, maintained by PostgreSQL.</summary>
     public NpgsqlTsVector SearchVector { get; private set; } = null!;
 }
 
@@ -50,8 +50,16 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
 
             // Hybrid search (ADR 0013): a generated tsvector with a GIN index for keywords and
             // an HNSW index over the embedding for similarity.
-            e.HasGeneratedTsVectorColumn(p => p.SearchVector, "english", p => new { p.Name, p.Description, p.Category })
-                .HasIndex(p => p.SearchVector).HasMethod("gin");
+            // A word in the name counts more than one in the category, and that more than one
+            // in the description, so "desk" ranks desks above a lamp that mentions a desk.
+            e.Property(p => p.SearchVector).HasComputedColumnSql(
+                """
+                setweight(to_tsvector('english', name), 'A') ||
+                setweight(to_tsvector('english', category), 'B') ||
+                setweight(to_tsvector('english', description), 'C')
+                """,
+                stored: true);
+            e.HasIndex(p => p.SearchVector).HasMethod("gin");
             e.Property(p => p.Embedding).HasColumnType($"vector({HashingEmbeddingGenerator.Dimensions})");
             e.HasIndex(p => p.Embedding).HasMethod("hnsw").HasOperators("vector_cosine_ops");
             e.ToTable(t => t.HasCheckConstraint("ck_products_price_not_negative", "price_cents >= 0"));

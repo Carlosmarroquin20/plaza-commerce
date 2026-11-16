@@ -25,9 +25,9 @@ namespace Plaza.Catalog.Data.Migrations
                 name: "search_vector",
                 table: "products",
                 type: "tsvector",
-                nullable: false)
-                .Annotation("Npgsql:TsVectorConfig", "english")
-                .Annotation("Npgsql:TsVectorProperties", new[] { "name", "description", "category" });
+                nullable: false,
+                computedColumnSql: "setweight(to_tsvector('english', name), 'A') ||\nsetweight(to_tsvector('english', category), 'B') ||\nsetweight(to_tsvector('english', description), 'C')",
+                stored: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_products_embedding",
@@ -55,11 +55,11 @@ namespace Plaza.Catalog.Data.Migrations
                 table: "products");
 
             migrationBuilder.DropColumn(
-                name: "embedding",
+                name: "search_vector",
                 table: "products");
 
             migrationBuilder.DropColumn(
-                name: "search_vector",
+                name: "embedding",
                 table: "products");
 
             migrationBuilder.AlterDatabase()
