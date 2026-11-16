@@ -1,0 +1,16 @@
+{
+  "retrieval": {
+    "recall@3.name": 1.0,
+    "mrr.name": 1.0,
+    "recall@3.keyword": 1.0,
+    "mrr.keyword": 1.0,
+    "recall@3.typo": 1.0,
+    "mrr.typo": 0.96,
+    "recall@3.need": 0.66,
+    "mrr.need": 0.55,
+    "recall@3.all": 0.92,
+    "mrr.all": 0.89,
+    "recall@3.all.keyword-only": 0.82,
+    "recall@3.all.vector-only": 0.91
+  }
+}

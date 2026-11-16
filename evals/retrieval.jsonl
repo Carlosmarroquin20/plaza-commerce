@@ -1,0 +1,70 @@
+{"id":"R001","slice":"name","query":"standing desk","expected":[1]}
+{"id":"R002","slice":"name","query":"compact desk 100 cm","expected":[2]}
+{"id":"R003","slice":"name","query":"ergonomic mesh chair","expected":[3]}
+{"id":"R004","slice":"name","query":"task chair","expected":[4]}
+{"id":"R005","slice":"name","query":"27 inch QHD monitor","expected":[5]}
+{"id":"R006","slice":"name","query":"24 inch full hd monitor","expected":[6]}
+{"id":"R007","slice":"name","query":"monitor arm","expected":[7]}
+{"id":"R008","slice":"name","query":"mechanical keyboard","expected":[8]}
+{"id":"R009","slice":"name","query":"slim wireless keyboard","expected":[9]}
+{"id":"R010","slice":"name","query":"vertical ergonomic mouse","expected":[10]}
+{"id":"R011","slice":"name","query":"wireless mouse","expected":[11,10]}
+{"id":"R012","slice":"name","query":"full hd webcam","expected":[12]}
+{"id":"R013","slice":"name","query":"noise cancelling headset","expected":[13]}
+{"id":"R014","slice":"name","query":"desktop speakers","expected":[14]}
+{"id":"R015","slice":"name","query":"led desk lamp","expected":[15]}
+{"id":"R016","slice":"name","query":"usb-c docking station","expected":[16]}
+{"id":"R017","slice":"name","query":"laptop stand","expected":[17]}
+{"id":"R018","slice":"name","query":"desk mat","expected":[18]}
+{"id":"R019","slice":"name","query":"adjustable footrest","expected":[19]}
+{"id":"R020","slice":"name","query":"wall shelf","expected":[20]}
+{"id":"R021","slice":"keyword","query":"height adjustable desk with memory presets","expected":[1]}
+{"id":"R022","slice":"keyword","query":"desk with a cable tray","expected":[2]}
+{"id":"R023","slice":"keyword","query":"chair with lumbar support","expected":[3]}
+{"id":"R024","slice":"keyword","query":"padded chair with height adjustment","expected":[4]}
+{"id":"R025","slice":"keyword","query":"monitor with usb-c","expected":[5]}
+{"id":"R026","slice":"keyword","query":"monitor with hdmi and displayport","expected":[6]}
+{"id":"R027","slice":"keyword","query":"gas spring arm for a 32 inch screen","expected":[7]}
+{"id":"R028","slice":"keyword","query":"tenkeyless keyboard with tactile switches","expected":[8]}
+{"id":"R029","slice":"keyword","query":"keyboard with a numeric pad","expected":[9]}
+{"id":"R030","slice":"keyword","query":"mouse that keeps the wrist neutral","expected":[10]}
+{"id":"R031","slice":"keyword","query":"mouse with a silent click","expected":[11]}
+{"id":"R032","slice":"keyword","query":"webcam with a privacy shutter","expected":[12]}
+{"id":"R033","slice":"keyword","query":"headset with a boom microphone","expected":[13]}
+{"id":"R034","slice":"keyword","query":"usb powered stereo speakers","expected":[14]}
+{"id":"R035","slice":"keyword","query":"dimmable lamp with adjustable colour temperature","expected":[15]}
+{"id":"R036","slice":"keyword","query":"dock with ethernet and 90 w charging","expected":[16]}
+{"id":"R037","slice":"keyword","query":"aluminium stand that raises the screen to eye level","expected":[17]}
+{"id":"R038","slice":"keyword","query":"felt mat that dampens typing noise","expected":[18]}
+{"id":"R039","slice":"keyword","query":"tilting footrest","expected":[19]}
+{"id":"R040","slice":"keyword","query":"floating shelf with hidden brackets","expected":[20]}
+{"id":"R041","slice":"typo","query":"standng desk","expected":[1]}
+{"id":"R042","slice":"typo","query":"ergonmic chair","expected":[3]}
+{"id":"R043","slice":"typo","query":"mechanical keybord","expected":[8]}
+{"id":"R044","slice":"typo","query":"wireles mouse","expected":[11,10]}
+{"id":"R045","slice":"typo","query":"webcamm","expected":[12]}
+{"id":"R046","slice":"typo","query":"hedset noise canceling","expected":[13]}
+{"id":"R047","slice":"typo","query":"moniter 27","expected":[5]}
+{"id":"R048","slice":"typo","query":"docking staton","expected":[16]}
+{"id":"R049","slice":"typo","query":"laptp stand","expected":[17]}
+{"id":"R050","slice":"typo","query":"footrst","expected":[19]}
+{"id":"R051","slice":"typo","query":"speekers","expected":[14]}
+{"id":"R052","slice":"typo","query":"desk lmap","expected":[15]}
+{"id":"R053","slice":"typo","query":"keybords","expected":[8,9]}
+{"id":"R054","slice":"typo","query":"monitrs","expected":[5,6]}
+{"id":"R055","slice":"typo","query":"chiars","expected":[3,4]}
+{"id":"R056","slice":"need","query":"something to sit on","expected":[3,4]}
+{"id":"R057","slice":"need","query":"a screen for my computer","expected":[5,6]}
+{"id":"R058","slice":"need","query":"my wrist hurts when I use the mouse","expected":[10]}
+{"id":"R059","slice":"need","query":"I need better light on my desk","expected":[15]}
+{"id":"R060","slice":"need","query":"a camera for video calls","expected":[12]}
+{"id":"R061","slice":"need","query":"block out noise while I work","expected":[13]}
+{"id":"R062","slice":"need","query":"raise my laptop screen","expected":[17]}
+{"id":"R063","slice":"need","query":"connect two displays to my laptop","expected":[16]}
+{"id":"R064","slice":"need","query":"protect the surface of my desk","expected":[18]}
+{"id":"R065","slice":"need","query":"rest my feet under the desk","expected":[19]}
+{"id":"R066","slice":"need","query":"store books on the wall","expected":[20]}
+{"id":"R067","slice":"need","query":"work standing up","expected":[1]}
+{"id":"R068","slice":"need","query":"listen to music at my desk","expected":[14]}
+{"id":"R069","slice":"need","query":"a small desk for a tiny room","expected":[2]}
+{"id":"R070","slice":"need","query":"make typing quieter","expected":[18,9]}
