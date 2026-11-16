@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using NpgsqlTypes;
+using Pgvector;
 using Plaza.Catalog.Data;
 
 #nullable disable
@@ -20,6 +22,7 @@ namespace Plaza.Catalog.Data.Migrations
                 .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Plaza.Catalog.Data.Product", b =>
@@ -47,6 +50,10 @@ namespace Plaza.Catalog.Data.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("description");
 
+                    b.Property<Vector>("Embedding")
+                        .HasColumnType("vector(256)")
+                        .HasColumnName("embedding");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -56,6 +63,14 @@ namespace Plaza.Catalog.Data.Migrations
                     b.Property<long>("PriceCents")
                         .HasColumnType("bigint")
                         .HasColumnName("price_cents");
+
+                    b.Property<NpgsqlTsVector>("SearchVector")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasColumnName("search_vector")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "english")
+                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Name", "Description", "Category" });
 
                     b.Property<string>("Sku")
                         .IsRequired()
@@ -68,6 +83,17 @@ namespace Plaza.Catalog.Data.Migrations
 
                     b.HasIndex("Category")
                         .HasDatabaseName("ix_products_category");
+
+                    b.HasIndex("Embedding")
+                        .HasDatabaseName("ix_products_embedding");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Embedding"), "hnsw");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Embedding"), new[] { "vector_cosine_ops" });
+
+                    b.HasIndex("SearchVector")
+                        .HasDatabaseName("ix_products_search_vector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "gin");
 
                     b.HasIndex("Sku")
                         .IsUnique()
