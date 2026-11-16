@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Plaza.Contracts;
 using Plaza.Messaging;
 using Plaza.Orders.Data;
@@ -23,7 +24,8 @@ public sealed record OrderResponse(
     string? FailureReason,
     IReadOnlyList<OrderItemResponse> Items,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    DateTimeOffset ExpiresAt);
 
 public static partial class OrderEndpoints
 {
@@ -46,6 +48,7 @@ public static partial class OrderEndpoints
         PlaceOrderRequest request,
         OrdersDbContext db,
         CatalogClient catalog,
+        IOptions<CheckoutOptions> checkout,
         TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
@@ -107,7 +110,12 @@ public static partial class OrderEndpoints
             .ToList();
 
         var order = Order.Place(
-            request.CustomerId, request.PaymentToken!, currencies[0], items, timeProvider.GetUtcNow());
+            request.CustomerId,
+            request.PaymentToken!,
+            currencies[0],
+            items,
+            timeProvider.GetUtcNow(),
+            checkout.Value.ReservationTtl);
 
         // The order and the event that starts the checkout commit together (ADR 0004).
         db.Orders.Add(order);
@@ -163,7 +171,8 @@ public static partial class OrderEndpoints
         order.FailureReason,
         [.. order.Items.Select(i => new OrderItemResponse(i.ProductId, i.ProductName, i.UnitPriceCents, i.Quantity))],
         order.CreatedAt,
-        order.UpdatedAt);
+        order.UpdatedAt,
+        order.ExpiresAt);
 
     [GeneratedRegex(@"\Atok_[A-Za-z0-9_]{4,64}\z")] // \z, not $: $ would accept a trailing newline
     private static partial Regex PaymentTokenPattern();

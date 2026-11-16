@@ -19,6 +19,22 @@ public sealed record PaymentRequested(Guid OrderId, long AmountCents, string Cur
     public static string MessageType => "orders.payment-requested.v1";
 }
 
+/// <summary>
+/// The order will not complete: undo whatever was done for it. Inventory releases the
+/// reservation and Payments voids or refunds the charge (ADR 0009).
+/// </summary>
+/// <param name="Reason">Why it was cancelled, one of <see cref="CancellationReasons"/>.</param>
+public sealed record OrderCancelled(Guid OrderId, string Reason) : IMessage
+{
+    public static string MessageType => "orders.order-cancelled.v1";
+}
+
+public static class CancellationReasons
+{
+    public const string PaymentFailed = "payment_failed";
+    public const string Expired = "expired";
+}
+
 /// <summary>The order is paid and final.</summary>
 public sealed record OrderConfirmed(Guid OrderId, Guid CustomerId, long TotalCents, string Currency) : IMessage
 {

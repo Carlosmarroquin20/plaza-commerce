@@ -7,6 +7,9 @@ public enum PaymentStatus
 {
     Succeeded,
     Failed,
+
+    /// <summary>Charged, then given back because the order was cancelled.</summary>
+    Refunded,
 }
 
 /// <summary>
@@ -23,13 +26,15 @@ public sealed class Payment
 
     public required string Currency { get; init; }
 
-    public required PaymentStatus Status { get; init; }
+    public required PaymentStatus Status { get; set; }
 
     public string? ProviderReference { get; init; }
 
     public string? FailureReason { get; init; }
 
     public required DateTimeOffset CreatedAt { get; init; }
+
+    public DateTimeOffset? RefundedAt { get; set; }
 }
 
 public sealed class PaymentsDbContext(DbContextOptions<PaymentsDbContext> options) : DbContext(options)

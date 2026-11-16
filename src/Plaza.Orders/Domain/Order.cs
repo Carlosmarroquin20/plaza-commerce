@@ -14,8 +14,14 @@ public enum OrderStatus
     /// <summary>Stock could not be reserved. Final.</summary>
     Rejected,
 
-    /// <summary>The charge was declined. Final in phase 1.</summary>
+    /// <summary>The charge was declined. Final; the reserved stock is released.</summary>
     PaymentFailed,
+
+    /// <summary>
+    /// The checkout did not finish before the order's deadline. Final; the reserved stock is
+    /// released and any charge is refunded.
+    /// </summary>
+    Expired,
 }
 
 /// <summary>A reply arrived that contradicts the order's history (ADR 0007).</summary>
@@ -41,6 +47,8 @@ public sealed class OrderItem
 /// Pending --StockReserved--> AwaitingPayment --PaymentSucceeded--> Confirmed
 ///    |                              |
 ///    +--StockRejected--> Rejected   +--PaymentFailed--> PaymentFailed
+///
+/// Pending or AwaitingPayment --deadline passed--> Expired
 /// </code>
 /// Each transition returns <c>true</c> when it was applied and <c>false</c> when the order had
 /// already moved past it (a duplicate or late reply, safe to ignore). A reply that cannot
@@ -77,14 +85,27 @@ public sealed class Order
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    /// <summary>
+    /// Deadline of the checkout. An order still waiting for stock or payment after it is
+    /// expired, which also ends its stock reservation (ADR 0009).
+    /// </summary>
+    public DateTimeOffset ExpiresAt { get; private set; }
+
     /// <summary>PostgreSQL <c>xmin</c>; makes concurrent updates of one order fail instead of overwrite.</summary>
     public uint Version { get; private set; }
 
     public IReadOnlyList<OrderItem> Items => _items;
 
     public static Order Place(
-        Guid customerId, string paymentToken, string currency, IReadOnlyCollection<OrderItem> items, DateTimeOffset now)
+        Guid customerId,
+        string paymentToken,
+        string currency,
+        IReadOnlyCollection<OrderItem> items,
+        DateTimeOffset now,
+        TimeSpan timeToComplete)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeToComplete, TimeSpan.Zero);
+
         if (items.Count == 0)
         {
             throw new ArgumentException("An order needs at least one item.", nameof(items));
@@ -106,6 +127,7 @@ public sealed class Order
             TotalCents = checked(items.Sum(i => checked(i.UnitPriceCents * i.Quantity))),
             CreatedAt = now,
             UpdatedAt = now,
+            ExpiresAt = now + timeToComplete,
         };
         order._items.AddRange(items);
         return order;
@@ -123,7 +145,7 @@ public sealed class Order
                 PaymentToken = null;
                 MoveTo(OrderStatus.AwaitingPayment, now);
                 return true;
-            case OrderStatus.AwaitingPayment or OrderStatus.Confirmed or OrderStatus.PaymentFailed:
+            case OrderStatus.AwaitingPayment or OrderStatus.Confirmed or OrderStatus.PaymentFailed or OrderStatus.Expired:
                 return false;
             default:
                 throw new InvalidOrderTransitionException(Id, Status, nameof(MarkStockReserved));
@@ -139,7 +161,7 @@ public sealed class Order
                 FailureReason = Truncate(reason);
                 MoveTo(OrderStatus.Rejected, now);
                 return true;
-            case OrderStatus.Rejected:
+            case OrderStatus.Rejected or OrderStatus.Expired:
                 return false;
             default:
                 throw new InvalidOrderTransitionException(Id, Status, nameof(MarkStockRejected));
@@ -153,7 +175,8 @@ public sealed class Order
             case OrderStatus.AwaitingPayment:
                 MoveTo(OrderStatus.Confirmed, now);
                 return true;
-            case OrderStatus.Confirmed:
+            // Expired: the cancellation already told Payments to refund this charge.
+            case OrderStatus.Confirmed or OrderStatus.Expired:
                 return false;
             default:
                 throw new InvalidOrderTransitionException(Id, Status, nameof(MarkPaymentSucceeded));
@@ -168,11 +191,28 @@ public sealed class Order
                 FailureReason = Truncate(reason);
                 MoveTo(OrderStatus.PaymentFailed, now);
                 return true;
-            case OrderStatus.PaymentFailed:
+            case OrderStatus.PaymentFailed or OrderStatus.Expired:
                 return false;
             default:
                 throw new InvalidOrderTransitionException(Id, Status, nameof(MarkPaymentFailed));
         }
+    }
+
+    /// <summary>
+    /// Gives up on an order that is still waiting once its deadline has passed. Returns
+    /// <c>false</c> for an order that already finished or is not due yet.
+    /// </summary>
+    public bool Expire(DateTimeOffset now)
+    {
+        if (Status is not (OrderStatus.Pending or OrderStatus.AwaitingPayment) || now < ExpiresAt)
+        {
+            return false;
+        }
+
+        PaymentToken = null;
+        FailureReason = "expired";
+        MoveTo(OrderStatus.Expired, now);
+        return true;
     }
 
     /// <summary>Reasons come from other services; never let an oversized one fail the transition.</summary>

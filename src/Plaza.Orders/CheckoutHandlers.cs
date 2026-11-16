@@ -61,6 +61,11 @@ public sealed class PaymentFailedHandler(OrdersDbContext db, TimeProvider timePr
     public async Task HandleAsync(PaymentFailed message, MessageContext context, CancellationToken cancellationToken)
     {
         var order = await OrderLookup.GetAsync(db, message.OrderId, cancellationToken);
-        order.MarkPaymentFailed(message.Reason, timeProvider.GetUtcNow());
+        if (order.MarkPaymentFailed(message.Reason, timeProvider.GetUtcNow()))
+        {
+            // Compensation: the stock held for this order can be sold again (ADR 0009).
+            db.EnqueueMessage(
+                Topics.Orders, order.Id.ToString(), new OrderCancelled(order.Id, CancellationReasons.PaymentFailed));
+        }
     }
 }

@@ -21,6 +21,8 @@ public sealed class OrdersDbContext(DbContextOptions<OrdersDbContext> options) :
             e.Property(o => o.FailureReason).HasMaxLength(Order.MaxFailureReasonLength);
             e.Property(o => o.Version).IsRowVersion();
             e.HasIndex(o => o.CustomerId);
+            // Serves the expiry sweep; only orders still in progress are indexed.
+            e.HasIndex(o => o.ExpiresAt).HasFilter("status IN ('Pending', 'AwaitingPayment')");
             e.ToTable(t => t.HasCheckConstraint("ck_orders_total_not_negative", "total_cents >= 0"));
 
             e.OwnsMany(o => o.Items, items =>

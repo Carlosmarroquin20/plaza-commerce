@@ -1,6 +1,6 @@
 using System.Net;
 using Plaza.Orders;
-using Plaza.Payments;
+using Plaza.PaymentProvider;
 using Plaza.Testing;
 using Xunit;
 
@@ -59,18 +59,24 @@ public sealed class CheckoutFlowTests(PlazaSystem plaza) : IClassFixture<PlazaSy
     }
 
     [Fact]
-    public async Task Declined_payment_fails_the_order_with_the_provider_reason()
+    public async Task Declined_payment_fails_the_order_and_releases_its_stock()
     {
         await plaza.SetStockAsync(SeedProducts.TaskChair, 10);
 
         var placed = await plaza.PlaceOrderAsync(
-            SimulatedPaymentProvider.DeclinedToken, new PlaceOrderLine(SeedProducts.TaskChair, 1));
+            ChargeSimulator.DeclinedToken, new PlaceOrderLine(SeedProducts.TaskChair, 1));
         var order = await plaza.WaitForFinalStatusAsync(placed.Id);
 
         Assert.Equal(("PaymentFailed", "card_declined"), (order.Status, order.FailureReason));
         var payment = Assert.Single(await plaza.GetPaymentsAsync(order.Id));
         Assert.Equal("Failed", payment.Status);
         Assert.Empty(await plaza.GetNotificationsAsync(order.Id));
+
+        // Compensation: the unit held for the order is available again.
+        await Eventually.UntilAsync(
+            async () => (await plaza.GetStockAsync(SeedProducts.TaskChair)) is { Available: 10, Reserved: 0 },
+            "the reservation of the failed order to be released");
+        Assert.DoesNotContain(await plaza.GetProviderChargesAsync(order.Id), c => c.Status == "Succeeded");
     }
 
     [Fact]

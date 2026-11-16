@@ -133,6 +133,70 @@ public sealed class StockReservationTests(Infrastructure infrastructure) : IAsyn
         await Assert.ThrowsAsync<InvalidOperationException>(() => CommitAsync(Guid.NewGuid()));
     }
 
+    [Fact]
+    public async Task Releasing_a_reservation_returns_the_units_once()
+    {
+        await SetStockAsync(Desk, available: 10);
+        await SetStockAsync(Chair, available: 3);
+        var orderId = Guid.NewGuid();
+        await ReserveAsync(orderId, new ReservationLine(Desk, 4), new ReservationLine(Chair, 3));
+
+        Assert.Equal(2, await ReleaseAsync(orderId));
+        Assert.Equal(0, await ReleaseAsync(orderId)); // a second cancellation must not add stock
+
+        var desk = await GetStockAsync(Desk);
+        var chair = await GetStockAsync(Chair);
+        Assert.Equal((10, 0), (desk.Available, desk.Reserved));
+        Assert.Equal((3, 0), (chair.Available, chair.Reserved));
+    }
+
+    [Fact]
+    public async Task Released_units_can_be_reserved_by_another_order()
+    {
+        await SetStockAsync(Desk, available: 1);
+        var cancelled = Guid.NewGuid();
+        await ReserveAsync(cancelled, new ReservationLine(Desk, 1));
+        Assert.Equal(ReservationOutcome.InsufficientStock, await ReserveAsync(Guid.NewGuid(), new ReservationLine(Desk, 1)));
+
+        await ReleaseAsync(cancelled);
+
+        Assert.Equal(ReservationOutcome.Reserved, await ReserveAsync(Guid.NewGuid(), new ReservationLine(Desk, 1)));
+    }
+
+    [Fact]
+    public async Task Releasing_an_order_that_never_reserved_does_nothing()
+    {
+        Assert.Equal(0, await ReleaseAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task Confirmed_and_cancelled_are_mutually_exclusive()
+    {
+        await SetStockAsync(Desk, available: 10);
+        var confirmed = Guid.NewGuid();
+        var cancelled = Guid.NewGuid();
+        await ReserveAsync(confirmed, new ReservationLine(Desk, 1));
+        await ReserveAsync(cancelled, new ReservationLine(Desk, 1));
+        await CommitAsync(confirmed);
+        await ReleaseAsync(cancelled);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => ReleaseAsync(confirmed));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => CommitAsync(cancelled));
+
+        var stock = await GetStockAsync(Desk);
+        Assert.Equal((9, 0), (stock.Available, stock.Reserved));
+    }
+
+    private async Task<int> ReleaseAsync(Guid orderId)
+    {
+        await using var db = new InventoryDbContext(_options);
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        var released = await new StockReservationService(db, TimeProvider.System).ReleaseAsync(orderId, CancellationToken.None);
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+        return released;
+    }
+
     private async Task<ReservationOutcome> ReserveAsync(Guid orderId, params ReservationLine[] lines)
     {
         await using var db = new InventoryDbContext(_options);

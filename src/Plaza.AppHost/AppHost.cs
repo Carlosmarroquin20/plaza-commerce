@@ -1,5 +1,6 @@
 // Local development environment (ADR 0002): one PostgreSQL server with a database per service,
-// a Redpanda broker, the five services, and the Aspire dashboard collecting their telemetry.
+// a Redpanda broker, the five services, the simulated payment provider (ADR 0010), and the
+// Aspire dashboard collecting their telemetry.
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -18,6 +19,7 @@ var inventoryDb = postgres.AddDatabase("inventory-db", databaseName: "inventory"
 var ordersDb = postgres.AddDatabase("orders-db", databaseName: "orders");
 var paymentsDb = postgres.AddDatabase("payments-db", databaseName: "payments");
 var notificationsDb = postgres.AddDatabase("notifications-db", databaseName: "notifications");
+var paymentProviderDb = postgres.AddDatabase("payment-provider-db", databaseName: "payment_provider");
 
 var catalog = builder.AddProject<Projects.Plaza_Catalog>("catalog")
     .WithReference(catalogDb, connectionName: "catalog").WaitFor(catalogDb);
@@ -31,9 +33,14 @@ builder.AddProject<Projects.Plaza_Orders>("orders")
     .WithReference(kafka).WaitFor(kafka)
     .WithReference(catalog).WaitFor(catalog);
 
+// Stands in for an external company's API; Payments reaches it by service discovery.
+var paymentProvider = builder.AddProject<Projects.Plaza_PaymentProvider>("payment-provider")
+    .WithReference(paymentProviderDb, connectionName: "payment-provider").WaitFor(paymentProviderDb);
+
 builder.AddProject<Projects.Plaza_Payments>("payments")
     .WithReference(paymentsDb, connectionName: "payments").WaitFor(paymentsDb)
-    .WithReference(kafka).WaitFor(kafka);
+    .WithReference(kafka).WaitFor(kafka)
+    .WithReference(paymentProvider).WaitFor(paymentProvider);
 
 builder.AddProject<Projects.Plaza_Notifications>("notifications")
     .WithReference(notificationsDb, connectionName: "notifications").WaitFor(notificationsDb)

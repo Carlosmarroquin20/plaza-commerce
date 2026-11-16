@@ -29,6 +29,16 @@ public sealed class OrderPlacedHandler(InventoryDbContext db, StockReservationSe
     }
 }
 
+/// <summary>
+/// Compensation: the order will not complete, so its units can be sold again. Messages of one
+/// order share a partition, so this always runs after the order's <see cref="OrderPlaced"/>.
+/// </summary>
+public sealed class OrderCancelledHandler(StockReservationService reservations) : IMessageHandler<OrderCancelled>
+{
+    public Task HandleAsync(OrderCancelled message, MessageContext context, CancellationToken cancellationToken) =>
+        reservations.ReleaseAsync(message.OrderId, cancellationToken);
+}
+
 /// <summary>The order is paid: its reserved units leave the stock for good.</summary>
 public sealed class OrderConfirmedHandler(StockReservationService reservations) : IMessageHandler<OrderConfirmed>
 {

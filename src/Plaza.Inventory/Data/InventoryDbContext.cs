@@ -22,6 +22,9 @@ public enum ReservationStatus
 
     /// <summary>The order was confirmed; the units left the warehouse.</summary>
     Committed,
+
+    /// <summary>The order was cancelled; the units went back to available stock.</summary>
+    Released,
 }
 
 public sealed class Reservation

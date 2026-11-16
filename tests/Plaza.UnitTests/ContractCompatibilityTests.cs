@@ -23,6 +23,7 @@ public sealed class ContractCompatibilityTests
         Assert.Equal("orders.order-placed.v1", Name<OrderPlaced>());
         Assert.Equal("orders.payment-requested.v1", Name<PaymentRequested>());
         Assert.Equal("orders.order-confirmed.v1", Name<OrderConfirmed>());
+        Assert.Equal("orders.order-cancelled.v1", Name<OrderCancelled>());
         Assert.Equal("inventory.stock-reserved.v1", Name<StockReserved>());
         Assert.Equal("inventory.stock-rejected.v1", Name<StockRejected>());
         Assert.Equal("payments.payment-succeeded.v1", Name<PaymentSucceeded>());
@@ -67,6 +68,15 @@ public sealed class ContractCompatibilityTests
             """);
 
         Assert.Equal(new OrderConfirmed(Guid.Parse(OrderId), Guid.Parse(OtherId), 35300, "USD"), message);
+    }
+
+    [Fact]
+    public void OrderCancelled_v1()
+    {
+        var message = Read<OrderCancelled>($$"""{"orderId":"{{OrderId}}","reason":"expired"}""");
+
+        Assert.Equal(new OrderCancelled(Guid.Parse(OrderId), CancellationReasons.Expired), message);
+        Assert.Equal("payment_failed", CancellationReasons.PaymentFailed);
     }
 
     [Fact]

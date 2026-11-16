@@ -20,7 +20,8 @@ builder.Services.AddPlazaMessaging<InventoryDbContext>("inventory")
     .Publishes(Topics.Inventory)
     .Subscribe(Topics.Orders)
     .Handle<OrderPlaced, OrderPlacedHandler>()
-    .Handle<OrderConfirmed, OrderConfirmedHandler>();
+    .Handle<OrderConfirmed, OrderConfirmedHandler>()
+    .Handle<OrderCancelled, OrderCancelledHandler>();
 
 var app = builder.Build();
 

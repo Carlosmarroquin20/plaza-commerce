@@ -5,7 +5,7 @@ using Plaza.Payments.Data;
 namespace Plaza.Payments;
 
 public sealed record PaymentResponse(
-    Guid Id, Guid OrderId, long AmountCents, string Currency, string Status, string? FailureReason, DateTimeOffset CreatedAt);
+    Guid Id, Guid OrderId, long AmountCents, string Currency, string Status, string? FailureReason, DateTimeOffset CreatedAt, DateTimeOffset? RefundedAt);
 
 public static class PaymentEndpoints
 {
@@ -22,7 +22,7 @@ public static class PaymentEndpoints
         var payments = await db.Payments.AsNoTracking()
             .Where(p => p.OrderId == orderId)
             .Select(p => new PaymentResponse(
-                p.Id, p.OrderId, p.AmountCents, p.Currency, p.Status.ToString(), p.FailureReason, p.CreatedAt))
+                p.Id, p.OrderId, p.AmountCents, p.Currency, p.Status.ToString(), p.FailureReason, p.CreatedAt, p.RefundedAt))
             .ToListAsync(cancellationToken);
         return TypedResults.Ok(payments);
     }

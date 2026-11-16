@@ -15,11 +15,19 @@ builder.Services.AddDbContext<PaymentsDbContext>((services, options) => options
     .UseSnakeCaseNamingConvention());
 builder.Services.AddHealthChecks().AddDbContextCheck<PaymentsDbContext>();
 
-builder.Services.AddSingleton<IPaymentProvider, SimulatedPaymentProvider>();
+// "payment-provider" is resolved by service discovery (services:payment-provider:http:0).
+builder.Services.AddHttpClient<IPaymentProvider, HttpPaymentProvider>((services, http) =>
+{
+    http.BaseAddress = new Uri("http://payment-provider");
+    // A slow provider must not hold a partition for long: give up and retry with the same key.
+    http.Timeout = services.GetRequiredService<IConfiguration>()
+        .GetValue("PaymentProvider:Timeout", TimeSpan.FromSeconds(5));
+});
 builder.Services.AddPlazaMessaging<PaymentsDbContext>("payments")
     .Publishes(Topics.Payments)
     .Subscribe(Topics.Orders)
-    .Handle<PaymentRequested, PaymentRequestedHandler>();
+    .Handle<PaymentRequested, PaymentRequestedHandler>()
+    .Handle<OrderCancelled, OrderCancelledHandler>();
 
 var app = builder.Build();
 
