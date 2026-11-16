@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Plaza.Catalog;
 using Microsoft.Extensions.AI;
+using Plaza.Catalog;
 using Plaza.Catalog.Data;
 using Plaza.Catalog.Search;
 using Plaza.ServiceDefaults;
