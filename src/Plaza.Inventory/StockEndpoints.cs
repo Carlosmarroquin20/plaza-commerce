@@ -11,11 +11,13 @@ public sealed record SetStockRequest(int Available);
 public static class StockEndpoints
 {
     private const int MaxUnits = 1_000_000;
+    private const int MaxBatchSize = 100;
 
     public static IEndpointRouteBuilder MapStockEndpoints(this IEndpointRouteBuilder app)
     {
         var stock = app.MapGroup("/stock");
         stock.MapGet("/{productId:guid}", GetAsync);
+        stock.MapGet("/batch", GetBatchAsync);
         // Internal: back-office stock adjustment. Not exposed to customers.
         stock.MapPut("/{productId:guid}", SetAsync);
         return app;
@@ -29,6 +31,25 @@ public static class StockEndpoints
         return item is null
             ? TypedResults.NotFound()
             : TypedResults.Ok(new StockResponse(item.ProductId, item.Available, item.Reserved));
+    }
+
+    /// <summary>Stock of several products in one call; products without stock records are omitted.</summary>
+    private static async Task<Results<Ok<List<StockResponse>>, ValidationProblem>> GetBatchAsync(
+        Guid[] ids, InventoryDbContext db, CancellationToken cancellationToken)
+    {
+        if (ids.Length is 0 or > MaxBatchSize)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["ids"] = [$"Between 1 and {MaxBatchSize} ids are required."],
+            });
+        }
+
+        var items = await db.StockItems.AsNoTracking()
+            .Where(s => ids.Contains(s.ProductId))
+            .Select(s => new StockResponse(s.ProductId, s.Available, s.Reserved))
+            .ToListAsync(cancellationToken);
+        return TypedResults.Ok(items);
     }
 
     private static async Task<Results<Ok<StockResponse>, ValidationProblem>> SetAsync(
