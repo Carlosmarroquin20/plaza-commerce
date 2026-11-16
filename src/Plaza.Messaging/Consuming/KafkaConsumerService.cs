@@ -1,7 +1,9 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Channels;
 using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +16,8 @@ namespace Plaza.Messaging.Consuming;
 
 /// <summary>
 /// Consumes the subscribed topics and applies each message exactly once (ADR 0005), retrying
-/// failures in place and dead-lettering what cannot be processed (ADR 0006).
+/// failures in place and dead-lettering what cannot be processed (ADR 0006). Partitions are
+/// processed in parallel, each in order (ADR 0021).
 /// </summary>
 internal sealed partial class KafkaConsumerService<TDbContext>(
     IServiceScopeFactory scopeFactory,
@@ -27,6 +30,8 @@ internal sealed partial class KafkaConsumerService<TDbContext>(
 {
     private static readonly TimeSpan PollTimeout = TimeSpan.FromMilliseconds(200);
     private static readonly TimeSpan DeadLetterRetryDelay = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan QueueFullDelay = TimeSpan.FromMilliseconds(5);
+    private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(10);
 
     private readonly MessagingOptions _options = options.Value;
 
@@ -62,10 +67,19 @@ internal sealed partial class KafkaConsumerService<TDbContext>(
 
         consumer.Subscribe(registry.Subscriptions);
 
+        // One worker per partition (ADR 0021). Messages of a partition are handled one at a
+        // time and in order, so everything about one key still happens in sequence, while
+        // different partitions proceed in parallel. The consumer itself is only ever touched
+        // by this thread: workers report what they finished and this loop stores the offsets.
+        var workers = new Dictionary<TopicPartition, (Channel<ConsumeResult<string, byte[]>> Queue, Task Task)>();
+        var processed = new ConcurrentQueue<ConsumeResult<string, byte[]>>();
+
         try
         {
             while (!stoppingToken.IsCancellationRequested)
             {
+                StoreProcessedOffsets(consumer, processed);
+
                 ConsumeResult<string, byte[]>? result;
                 try
                 {
@@ -82,30 +96,77 @@ internal sealed partial class KafkaConsumerService<TDbContext>(
                     continue;
                 }
 
-                await ProcessAsync(result, stoppingToken);
-
-                try
+                if (!workers.TryGetValue(result.TopicPartition, out var worker))
                 {
-                    consumer.StoreOffset(result);
+                    // Bounded: a partition that falls behind makes this loop wait instead of
+                    // reading the whole topic into memory.
+                    var queue = Channel.CreateBounded<ConsumeResult<string, byte[]>>(
+                        new BoundedChannelOptions(_options.PartitionQueueLength) { SingleReader = true, SingleWriter = true });
+                    worker = (queue, Task.Run(() => DrainAsync(queue.Reader, processed, stoppingToken), stoppingToken));
+                    workers[result.TopicPartition] = worker;
                 }
-                catch (KafkaException ex)
+
+                while (!worker.Queue.Writer.TryWrite(result))
                 {
-                    // The partition was revoked while processing. The new owner will receive
-                    // the message again and the inbox will discard it.
-                    LogKafkaError(logger, ex.Error.Reason);
+                    // Keep storing offsets while waiting, or a full queue could never drain.
+                    StoreProcessedOffsets(consumer, processed);
+                    await Task.Delay(QueueFullDelay, stoppingToken);
                 }
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
-            // Shutting down: the message in flight was not stored and will be redelivered.
+            // Shutting down: messages in flight were not stored and will be redelivered.
         }
         finally
         {
+            foreach (var (queue, _) in workers.Values)
+            {
+                queue.Writer.TryComplete();
+            }
+
+            try
+            {
+                await Task.WhenAll(workers.Values.Select(w => w.Task)).WaitAsync(ShutdownTimeout);
+            }
+            catch (Exception ex) when (ex is OperationCanceledException or TimeoutException)
+            {
+                // Workers stop at the next message boundary; anything unfinished is redelivered.
+            }
+
+            StoreProcessedOffsets(consumer, processed);
             consumer.Close();
         }
     }
 
+    private async Task DrainAsync(
+        ChannelReader<ConsumeResult<string, byte[]>> queue,
+        ConcurrentQueue<ConsumeResult<string, byte[]>> processed,
+        CancellationToken stoppingToken)
+    {
+        await foreach (var result in queue.ReadAllAsync(stoppingToken))
+        {
+            await ProcessAsync(result, stoppingToken);
+            processed.Enqueue(result);
+        }
+    }
+
+    private void StoreProcessedOffsets(IConsumer<string, byte[]> consumer, ConcurrentQueue<ConsumeResult<string, byte[]>> processed)
+    {
+        while (processed.TryDequeue(out var result))
+        {
+            try
+            {
+                consumer.StoreOffset(result);
+            }
+            catch (KafkaException ex)
+            {
+                // The partition was revoked while processing. The new owner will receive
+                // the message again and the inbox will discard it.
+                LogKafkaError(logger, ex.Error.Reason);
+            }
+        }
+    }
     private async Task ProcessAsync(ConsumeResult<string, byte[]> result, CancellationToken cancellationToken)
     {
         var messageType = GetHeader(result, MessageHeaders.MessageType);
