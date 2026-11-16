@@ -31,12 +31,14 @@ public static partial class OrderEndpoints
 {
     public const int MaxLines = 50;
     public const int MaxQuantityPerProduct = 100;
+    public const int MaxListed = 50;
 
     public static IEndpointRouteBuilder MapOrderEndpoints(this IEndpointRouteBuilder app)
     {
         var orders = app.MapGroup("/orders");
         orders.MapPost("/", PlaceAsync);
         orders.MapGet("/{id:guid}", GetAsync).WithName("GetOrder");
+        orders.MapGet("/", ListByCustomerAsync);
         return app;
     }
 
@@ -133,6 +135,27 @@ public static partial class OrderEndpoints
     {
         var order = await db.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
         return order is null ? TypedResults.NotFound() : TypedResults.Ok(ToResponse(order));
+    }
+
+    /// <summary>A customer's most recent orders, newest first. Internal: the caller vouches for the customer id.</summary>
+    private static async Task<Results<Ok<List<OrderResponse>>, ValidationProblem>> ListByCustomerAsync(
+        Guid customerId, OrdersDbContext db, CancellationToken cancellationToken, int limit = 20)
+    {
+        if (customerId == Guid.Empty || limit is < 1 or > MaxListed)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["query"] = [$"customerId is required and limit must be between 1 and {MaxListed}."],
+            });
+        }
+
+        // Order ids are UUIDv7, so ordering by id is ordering by creation time.
+        var orders = await db.Orders.AsNoTracking()
+            .Where(o => o.CustomerId == customerId)
+            .OrderByDescending(o => o.Id)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+        return TypedResults.Ok(orders.ConvertAll(ToResponse));
     }
 
     internal static Dictionary<string, string[]> Validate(PlaceOrderRequest request)
