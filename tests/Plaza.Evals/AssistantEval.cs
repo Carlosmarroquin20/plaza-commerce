@@ -63,6 +63,15 @@ public sealed class AssistantUnderEval : IAsyncLifetime
         (await stock.PutAsJsonAsync($"/stock/{EvalFiles.ProductId(20)}", new { available = 0 })).EnsureSuccessStatusCode();
     }
 
+    /// <summary>The MCP server, wired to the same Catalog and Inventory.</summary>
+    public HttpClient CreateMcp() => Create<Plaza.Mcp.CatalogueTools>(
+        "mcp",
+        services =>
+        {
+            services.AddHttpClient<CatalogApi>().ConfigurePrimaryHttpMessageHandler(() => _catalog.Server.CreateHandler());
+            services.AddHttpClient<InventoryApi>().ConfigurePrimaryHttpMessageHandler(() => _inventory.Server.CreateHandler());
+        }).CreateClient();
+
     /// <summary>Another instance of the assistant on the same databases, with its own settings.</summary>
     public HttpClient CreateAssistant(Dictionary<string, string> settings) => CreateAssistantHost(settings).CreateClient();
 
