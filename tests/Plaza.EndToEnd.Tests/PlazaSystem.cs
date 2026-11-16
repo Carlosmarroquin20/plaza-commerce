@@ -67,13 +67,21 @@ public class PlazaSystem : IAsyncLifetime
     /// <summary>The simulated payment provider's own API: its ledger is the truth about money.</summary>
     public HttpClient Provider { get; private set; } = null!;
 
+    /// <summary>In-memory servers that other hosts (added by derived fixtures) need to call.</summary>
+    protected WebApplicationFactory<CatalogDbContext> CatalogHost { get; private set; } = null!;
+
+    protected WebApplicationFactory<InventoryDbContext> InventoryHost { get; private set; } = null!;
+
+    protected WebApplicationFactory<OrdersDbContext> OrdersHost { get; private set; } = null!;
+
     public virtual async ValueTask InitializeAsync()
     {
         await _containers.StartAsync();
 
-        var catalog = Create<CatalogDbContext>("catalog");
+        var catalog = CatalogHost = Create<CatalogDbContext>("catalog");
         Catalog = catalog.CreateClient();
-        Inventory = Create<InventoryDbContext>("inventory").CreateClient();
+        InventoryHost = Create<InventoryDbContext>("inventory");
+        Inventory = InventoryHost.CreateClient();
         var provider = Create<ProviderDbContext>("payment-provider");
         Provider = provider.CreateClient();
 
@@ -85,10 +93,10 @@ public class PlazaSystem : IAsyncLifetime
         Notifications = Create<NotificationsDbContext>("notifications").CreateClient();
 
         // Orders calls Catalog over HTTP: route that client to the in-memory Catalog server.
-        Orders = Create<OrdersDbContext>("orders", services => services
+        OrdersHost = Create<OrdersDbContext>("orders", services => services
             .AddHttpClient<CatalogClient>()
-            .ConfigurePrimaryHttpMessageHandler(() => catalog.Server.CreateHandler()))
-            .CreateClient();
+            .ConfigurePrimaryHttpMessageHandler(() => catalog.Server.CreateHandler()));
+        Orders = OrdersHost.CreateClient();
     }
 
     /// <summary>
@@ -120,19 +128,23 @@ public class PlazaSystem : IAsyncLifetime
         GC.SuppressFinalize(this);
     }
 
-    private WebApplicationFactory<TMarker> Create<TMarker>(string service, Action<IServiceCollection>? configure = null)
+    protected WebApplicationFactory<TMarker> Create<TMarker>(
+        string service,
+        Action<IServiceCollection>? configure = null,
+        IReadOnlyDictionary<string, string>? hostSettings = null,
+        string environment = "Development")
         where TMarker : class
     {
         var factory = new WebApplicationFactory<TMarker>().WithWebHostBuilder(builder =>
         {
-            builder.UseEnvironment("Development");
+            builder.UseEnvironment(environment);
             builder.UseSetting($"ConnectionStrings:{service}", _containers.ConnectionString(service));
             builder.UseSetting("ConnectionStrings:kafka", _containers.KafkaBootstrapServers);
             builder.UseSetting("services:catalog:http:0", "http://localhost");
             builder.UseSetting("services:payment-provider:http:0", "http://localhost");
             builder.UseSetting("Seed:Enabled", "true");
             builder.UseSetting("Messaging:OutboxPollInterval", "00:00:00.020");
-            foreach (var (key, value) in Settings)
+            foreach (var (key, value) in Settings.Concat(hostSettings ?? new Dictionary<string, string>()))
             {
                 builder.UseSetting(key, value);
             }
