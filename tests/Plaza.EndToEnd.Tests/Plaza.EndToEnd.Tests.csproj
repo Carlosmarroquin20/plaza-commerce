@@ -16,13 +16,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Plaza.Assistant\Plaza.Assistant.csproj" />
     <ProjectReference Include="..\..\src\Plaza.Catalog\Plaza.Catalog.csproj" />
+    <ProjectReference Include="..\..\src\Plaza.Gateway\Plaza.Gateway.csproj" />
     <ProjectReference Include="..\..\src\Plaza.Inventory\Plaza.Inventory.csproj" />
     <ProjectReference Include="..\..\src\Plaza.Notifications\Plaza.Notifications.csproj" />
     <ProjectReference Include="..\..\src\Plaza.Orders\Plaza.Orders.csproj" />
     <ProjectReference Include="..\..\src\Plaza.PaymentProvider\Plaza.PaymentProvider.csproj" />
     <ProjectReference Include="..\..\src\Plaza.Payments\Plaza.Payments.csproj" />
     <ProjectReference Include="..\Plaza.Testing\Plaza.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\src\Plaza.Gateway\schema.graphql" Link="schema.graphql" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\src\Plaza.Gateway\schema.graphql')" />
   </ItemGroup>
 
 </Project>
