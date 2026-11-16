@@ -13,7 +13,7 @@ builder.Services.AddProblemDetails();
 // The connection string is read when the context is first resolved, so hosts that supply
 // configuration late (integration tests) are honoured.
 builder.Services.AddDbContext<CatalogDbContext>((services, options) => options
-    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetConnectionString("catalog"), npgsql => npgsql.UseVector())
+    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetPlazaConnectionString("catalog"), npgsql => npgsql.UseVector())
     .UseSnakeCaseNamingConvention());
 builder.Services.AddHealthChecks().AddDbContextCheck<CatalogDbContext>();
 

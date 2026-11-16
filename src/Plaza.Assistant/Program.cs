@@ -26,7 +26,7 @@ builder.Services.AddOptions<AssistantOptions>()
     .ValidateOnStart();
 
 builder.Services.AddDbContext<AssistantDbContext>((services, options) => options
-    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetConnectionString("assistant"))
+    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetPlazaConnectionString("assistant"))
     .UseSnakeCaseNamingConvention());
 builder.Services.AddHealthChecks().AddDbContextCheck<AssistantDbContext>();
 

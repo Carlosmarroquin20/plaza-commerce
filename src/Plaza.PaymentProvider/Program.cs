@@ -15,7 +15,7 @@ builder.Services.AddProblemDetails();
 builder.Services.TryAddSingleton(TimeProvider.System);
 
 builder.Services.AddDbContext<ProviderDbContext>((services, options) => options
-    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetConnectionString("payment-provider"))
+    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetPlazaConnectionString("payment-provider"))
     .UseSnakeCaseNamingConvention());
 builder.Services.AddHealthChecks().AddDbContextCheck<ProviderDbContext>();
 

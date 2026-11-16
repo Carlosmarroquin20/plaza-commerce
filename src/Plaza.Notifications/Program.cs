@@ -11,7 +11,7 @@ builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddDbContext<NotificationsDbContext>((services, options) => options
-    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetConnectionString("notifications"))
+    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetPlazaConnectionString("notifications"))
     .UseSnakeCaseNamingConvention());
 builder.Services.AddHealthChecks().AddDbContextCheck<NotificationsDbContext>();
 

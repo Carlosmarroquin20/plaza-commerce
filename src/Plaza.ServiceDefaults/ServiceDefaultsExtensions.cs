@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -33,6 +34,26 @@ public static class ServiceDefaultsExtensions
         builder.Services.ConfigureHttpClientDefaults(http => http.AddServiceDiscovery());
 
         return builder;
+    }
+
+    /// <summary>
+    /// The connection string of a service's database, with the size of its connection pool
+    /// capped (<c>Database:MaxPoolSize</c>, 15 by default). Every service shares one PostgreSQL
+    /// server, so each gets a share of its connections: under load a service then waits for one
+    /// of its own instead of taking the server's last one from everybody else (ADR 0020).
+    /// </summary>
+    public static string? GetPlazaConnectionString(this IConfiguration configuration, string name)
+    {
+        var connectionString = configuration.GetConnectionString(name);
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return connectionString; // Design-time tools run without one.
+        }
+
+        return new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            MaxPoolSize = configuration.GetValue("Database:MaxPoolSize", 15),
+        }.ConnectionString;
     }
 
     public static WebApplication MapDefaultEndpoints(this WebApplication app)

@@ -11,7 +11,7 @@ builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddDbContext<InventoryDbContext>((services, options) => options
-    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetConnectionString("inventory"))
+    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetPlazaConnectionString("inventory"))
     .UseSnakeCaseNamingConvention());
 builder.Services.AddHealthChecks().AddDbContextCheck<InventoryDbContext>();
 

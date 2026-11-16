@@ -14,7 +14,9 @@ var loadTest = string.Equals(builder.Configuration["Plaza:LoadTest"], "true", St
 var postgres = builder.AddPostgres("postgres")
     // PostgreSQL 18 with pgvector, used by the catalogue's hybrid search (ADR 0013).
     .WithImage("pgvector/pgvector", "0.8.7-pg18-trixie")
-    .WithImageSHA256("ab49524d18df7200b74ac9a475e1db6297fc1eb57da4c214c63d10ecc4b754fa");
+    .WithImageSHA256("ab49524d18df7200b74ac9a475e1db6297fc1eb57da4c214c63d10ecc4b754fa")
+    // Seven services with a pool of 15 each, plus headroom for tools (ADR 0020).
+    .WithArgs("-c", "max_connections=150");
 
 var kafka = builder.AddRedPanda("kafka")
     .WithImage("redpandadata/redpanda", "v26.2.7")

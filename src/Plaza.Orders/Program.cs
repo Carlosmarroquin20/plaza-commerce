@@ -11,7 +11,7 @@ builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddDbContext<OrdersDbContext>((services, options) => options
-    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetConnectionString("orders"))
+    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetPlazaConnectionString("orders"))
     .UseSnakeCaseNamingConvention());
 builder.Services.AddHealthChecks().AddDbContextCheck<OrdersDbContext>();
 

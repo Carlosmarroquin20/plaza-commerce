@@ -11,7 +11,7 @@ builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddDbContext<PaymentsDbContext>((services, options) => options
-    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetConnectionString("payments"))
+    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetPlazaConnectionString("payments"))
     .UseSnakeCaseNamingConvention());
 builder.Services.AddHealthChecks().AddDbContextCheck<PaymentsDbContext>();
 
