@@ -3,7 +3,8 @@
 Event-driven e-commerce backend in .NET 10. Five services talk through Kafka with a
 transactional outbox and idempotent consumers. The checkout is a saga owned by the Orders
 service: when a payment fails or takes too long, the order is cancelled and every service
-undoes its part. An AI shopping assistant searches the catalogue, checks stock and builds carts through
+undoes its part. Clients use one public GraphQL API; services talk REST and events among themselves. An AI
+shopping assistant searches the catalogue, checks stock and builds carts through
 tools, with the model behind it swappable and a quality gate of labelled cases in CI.
 
 The catalogue and all data are invented. Payments go through a simulated provider with opaque
@@ -13,6 +14,23 @@ tokens; no card data exists anywhere in the system.
 
 Every figure below is produced by the test suite. Reproduce with `dotnet test --solution Plaza.slnx`
 (needs Docker; containers are started by Testcontainers).
+
+### Public GraphQL API (phase 4)
+
+Measured by `GraphQlTests`, which run the gateway in front of the real services and record
+every call it makes to them.
+
+| Claim | Evidence | How it is measured |
+|---|---|---|
+| A list does not cost one backend call per row | 20 products with their stock: 2 internal calls (1 to Catalog, 1 to Inventory) where resolving each product alone would make 21 | `GraphQlTests.Catalogue_with_stock_costs_one_call_per_service_not_one_per_product` |
+| The same holds across services and nesting | 3 orders with 9 lines and each line's product and stock: 3 internal calls (Orders, Catalog, Inventory) instead of 19 | `GraphQlTests.Products_of_all_order_lines_are_loaded_in_one_call` |
+| A query too deep or too expensive is refused before it runs | 5 nested `similar` fields: rejected for depth. 50 products x 5 similar x 5 similar: rejected for cost. In both cases the gateway made 0 internal calls | `GraphQlTests.Query_nested_deeper...`, `Query_more_expensive...` |
+| A customer sees only their own orders | Another customer's order id returns `null`, the same as an id that does not exist, and `myOrders` is empty for them | `GraphQlTests.Order_of_another_customer_does_not_exist_for_the_caller` |
+| The customer of an order is the one in the token | An order placed through the API is stored for the token's subject, confirmed, and charged once | `GraphQlTests.Order_placed_through_the_api_is_checked_out_for_the_caller` |
+| Bad tokens are refused | Expired, signed with another key, or malformed: 401. No token: the catalogue is readable, orders and the assistant answer `AUTH_NOT_AUTHENTICATED` | `GraphQlTests.Expired_or_forged_tokens_are_refused`, `Catalogue_is_public_but...` |
+| An assistant conversation belongs to who started it | The same conversation id used by a second customer leads to a separate conversation with no cart | `GraphQlTests.Assistant_conversation_belongs_to_the_caller_who_started_it` |
+| Production does not describe itself | Started in the Production environment: introspection, schema download, the IDE and the development token endpoint are all refused; ordinary queries work | `GraphQlTests.Production_does_not_answer_introspection_or_serve_the_ide` |
+| The public schema cannot change by accident | The served schema is compared with [`schema.graphql`](src/Plaza.Gateway/schema.graphql) in the repository | `GraphQlTests.Public_schema_matches_the_one_committed_to_the_repository` |
 
 ### AI assistant and search (phase 3)
 
@@ -65,9 +83,10 @@ Plaza believes happened. Each test also proves that its fault really occurred.
 | A message that cannot be processed does not block its partition and is not dropped | After 4 failed attempts it is on the dead-letter topic with the reason attached, and the next message is processed | `ConsumerTests.Message_that_always_fails...` |
 | A trace survives the hop through the outbox and Kafka | The handler's span has the trace id and parent span id of the request that enqueued the message | `ConsumerTests.Handler_runs_in_the_trace...` |
 
-Test suite at the end of phase 3: **181 tests, 0 failures** (106 unit, 18 messaging, 13 inventory,
-15 payment provider, 13 evals and assistant, 16 end-to-end). Counted by the test runner's summary;
-one full run took 2 min 38 s on the development laptop, containers included.
+Test suite at the end of phase 4: **199 tests, 0 failures** (106 unit, 18 messaging, 13 inventory,
+15 payment provider, 13 evals and assistant, 34 end-to-end including 18 for the GraphQL API).
+Counted by the test runner's summary; one full run took 2 min 56 s on the development laptop,
+containers included.
 
 There are no latency or throughput numbers yet. They belong to the load-test phase and will be
 added here only when measured.
@@ -89,16 +108,21 @@ flowchart LR
         mcp[MCP server<br/>read-only]
     end
 
+    gateway[Gateway<br/>public GraphQL API]
+
     subgraph kafka [Kafka, Redpanda locally]
         t_orders[[plaza.orders.v1]]
         t_inventory[[plaza.inventory.v1]]
         t_payments[[plaza.payments.v1]]
     end
 
-    client -- "REST: POST /orders" --> orders
+    client -- "GraphQL + JWT" --> gateway
+    gateway -- REST --> orders
+    gateway -- REST --> catalog
+    gateway -- REST --> inventory
+    gateway -- REST --> assistant
     orders -- "REST: prices" --> catalog
     payments -- "REST + Idempotency-Key" --> provider
-    client -- "REST: chat" --> assistant
     mcpclient([MCP client]) -- "MCP over HTTP" --> mcp
     assistant -- "REST: search, prices" --> catalog
     assistant -- "REST: stock" --> inventory
@@ -175,8 +199,19 @@ Pending --StockReserved--> AwaitingPayment --PaymentSucceeded--> Confirmed
 - **Tracing.** The W3C trace context is stored with the outbox row and sent as a Kafka header;
   the consumer continues the trace.
 
-### The assistant
+### The public API
 
+- **One GraphQL endpoint.** `Plaza.Gateway` is the only service meant to be reachable from
+  outside. It holds no data; every field is resolved from an internal REST API.
+- **DataLoaders.** Stock and products are requested by key and fetched in one batched call
+  per request, whatever the shape of the query.
+- **Limits before execution.** Depth (6), static cost analysis (1000), capped arguments, a
+  15 s timeout and a rate limit per caller.
+- **Identity at the edge.** A JWT identifies the customer; orders and conversations are only
+  visible to their owner. Internal services trust the gateway.
+- **REST inside, events for the checkout.** Which one is used where, and why, is ADR 0017.
+
+### The assistant
 - **Model behind one interface.** The service only knows `IChatClient` (Microsoft.Extensions.AI).
   `Assistant:Provider` selects a scripted model (default, no network), Claude, OpenAI or Ollama.
 - **Tools.** `search_products` (hybrid search), `check_stock` and `build_cart`. They only read
@@ -204,7 +239,35 @@ dotnet run --project src/Plaza.AppHost
 ```
 
 This starts PostgreSQL, Redpanda, the five services, the simulated payment provider, the
-assistant, the MCP server and the Aspire dashboard (the URL with its login token is printed on start-up). Then place an order:
+assistant, the MCP server and the Aspire dashboard (the URL with its login token is printed on start-up).
+
+The public API is GraphQL at http://localhost:5100/graphql (open it in a browser for the IDE).
+In development, get a token for a new customer:
+
+```bash
+curl -s -X POST http://localhost:5100/dev/token
+```
+
+Search the catalogue (no token needed):
+
+```bash
+curl -s http://localhost:5100/graphql -H "Content-Type: application/json" -d '{"query":"{ searchProducts(query: \"standing desk\") { id name priceCents availableStock } }"}'
+```
+
+Place an order and follow it, with the token in `Authorization: Bearer <accessToken>`:
+
+```graphql
+mutation {
+  placeOrder(input: { paymentToken: "tok_test_visa", lines: [{ productId: "a0000000-0000-4000-8000-000000000015", quantity: 2 }] }) {
+    order { id status totalCents }
+    errors
+  }
+}
+
+query { myOrders { status totalCents items { quantity product { name availableStock } } } }
+```
+
+The internal REST APIs are also reachable locally. Place an order directly with Orders:
 
 ```bash
 curl -i -X POST http://localhost:5103/orders -H "Content-Type: application/json" -d '{"customerId":"3f2504e0-4f89-41d3-9a0c-0305e82c3301","paymentToken":"tok_test_visa","lines":[{"productId":"a0000000-0000-4000-8000-000000000001","quantity":1}]}'
@@ -226,9 +289,10 @@ It answers with the scripted model. To use a real one, set `Assistant__Provider`
 
 | Service | Local URL | Endpoints |
 |---|---|---|
+| **Gateway (public)** | http://localhost:5100 | `POST /graphql`, `POST /dev/token` (development only) |
 | Catalog | http://localhost:5101 | `GET /products`, `GET /products/{id}`, `GET /products/batch?ids=`, `GET /products/search?q=` |
-| Inventory | http://localhost:5102 | `GET /stock/{productId}`, `PUT /stock/{productId}` |
-| Orders | http://localhost:5103 | `POST /orders`, `GET /orders/{id}` |
+| Inventory | http://localhost:5102 | `GET /stock/{productId}`, `GET /stock/batch?ids=`, `PUT /stock/{productId}` |
+| Orders | http://localhost:5103 | `POST /orders`, `GET /orders/{id}`, `GET /orders?customerId=` |
 | Payments | http://localhost:5104 | `GET /payments/by-order/{orderId}` |
 | Notifications | http://localhost:5105 | `GET /notifications/by-order/{orderId}` |
 | Payment provider (simulated) | http://localhost:5106 | `POST /charges`, `PUT /charges/by-key/{key}/void`, `GET /charges/by-key/{key}`, `GET /charges?reference=` |
@@ -250,7 +314,7 @@ dotnet test --solution Plaza.slnx
 | `Plaza.Inventory.Tests` | Stock reservation, commit and release under concurrency | Yes |
 | `Plaza.PaymentProvider.Tests` | Idempotency keys and voids of the simulated provider | Yes |
 | `Plaza.Evals` | Search and assistant quality over 133 labelled cases, cost and rate limits, the MCP server through an MCP client | Yes |
-| `Plaza.EndToEnd.Tests` | The whole checkout across all services: duplicated delivery, provider faults, deadline, broker restart | Yes |
+| `Plaza.EndToEnd.Tests` | The whole checkout across all services: duplicated delivery, provider faults, deadline, broker restart; the GraphQL API | Yes |
 
 ## Repository layout
 
@@ -260,7 +324,8 @@ src/
   Plaza.ServiceDefaults  OpenTelemetry, health checks, service discovery
   Plaza.Messaging        Outbox, inbox, consumer with retries and dead-letter topic
   Plaza.Contracts        Message types and topic names
-  Plaza.Catalog          Products (REST)
+  Plaza.Gateway          Public GraphQL API: DataLoaders, auth, query limits
+  Plaza.Catalog          Products and hybrid search (REST)
   Plaza.Inventory        Stock and reservations
   Plaza.Orders           Order API, checkout saga and deadline
   Plaza.Payments         Charges and voids through the payment provider
@@ -297,9 +362,18 @@ Each significant decision has a record with the alternatives that were rejected:
 | [0014](docs/adr/0014-assistant-guardrails-capability-limits-first.md) | Guardrails: limit what the model can do, then filter what it reads and says |
 | [0015](docs/adr/0015-evals-as-a-quality-gate-in-ci.md) | Evals with a baseline that fails the build |
 | [0016](docs/adr/0016-mcp-server-for-catalogue-and-stock.md) | A read-only MCP server for catalogue and stock |
+| [0017](docs/adr/0017-graphql-for-clients-rest-between-services.md) | GraphQL for clients, REST between services, events for the checkout |
+| [0018](docs/adr/0018-identity-at-the-edge-with-jwt.md) | Callers are identified at the gateway with JWT; ownership is enforced there |
+| [0019](docs/adr/0019-graphql-query-limits-and-batching.md) | GraphQL queries are batched with DataLoaders and bounded in depth and cost |
 
 ## Security
 
+- **Access control at the public edge.** The gateway validates a JWT, takes the customer from it
+  and never from the request, and returns an order or a conversation only to its owner. Somebody
+  else's order looks exactly like one that does not exist.
+- **Bounded queries.** GraphQL queries are limited in depth and cost before they run, arguments
+  are capped, and callers are rate limited. Production disables introspection, the schema
+  download and the IDE, and hides exception details.
 - **No card data.** The order API accepts only token-shaped values (`tok_...`); a card number is
   rejected by validation. The token is forgotten by Orders once the charge is requested,
   Payments stores only the provider's reference, and the provider stores a hash of the request.
@@ -320,16 +394,21 @@ Each significant decision has a record with the alternatives that were rejected:
 
 ### Known limits of this phase
 
-- **No authentication.** The APIs are open, so anyone who knows an order id can read that order,
-  and the stock adjustment endpoint and the simulated provider (charges, voids) are
-  unprotected. Authentication is added with the public API; until then this must not be
-  exposed outside a development machine.
+- **Only the gateway authenticates.** The internal REST APIs, the simulated provider and the MCP
+  server trust whoever reaches them: directly, anyone can read any order, place one for any
+  customer or change stock. Only the gateway may be exposed; restricting the network is part of
+  the deployment phase.
+- **Tokens are validated, not issued.** There is no login or user store. Production needs an
+  OpenID Connect provider (`Auth:Authority`); the shared-key mode is for tests and development.
+  There are no roles and no persisted queries.
+- **GraphQL cost weights are judgments.** They were tuned with one legitimate query that the first
+  set refused; real numbers come with the load test.
 - **The assistant's filters are pattern matching.** They stop common injection attempts in English
   and Spanish and will miss inventive ones; what bounds the damage is that the model cannot order
   or pay. A model can still say something false, and one eval case shows it.
-- **The assistant's cost limit is per conversation, not per customer.** Without authentication
-  anyone can start another conversation; the per-address rate limit is the only global bound. A
-  conversation id is a bearer secret, and the MCP server has no rate limit.
+- **The assistant's cost limit is per conversation, not per customer.** A customer can start
+  another conversation; the gateway's rate limit per caller is the bound. Reached directly, not
+  through the gateway, a conversation id is a bearer secret. The MCP server has no rate limit.
 - **Search has no semantics yet.** The default embedder matches words and parts of words, so a
   third of need-style queries miss. A learned embedding model fits behind the same interface.
 - **A customer can be charged and then refunded.** If the provider answers after the order's
@@ -353,7 +432,7 @@ Each significant decision has a record with the alternatives that were rejected:
 1. **Order flow over Kafka with outbox, idempotent consumers, retries and dead-letter topic** (done)
 2. **Checkout saga with compensations, order deadline, payment idempotency keys, chaos tests** (done)
 3. **AI shopping assistant (Microsoft.Extensions.AI), hybrid search with pgvector, evals in CI, MCP server** (done)
-4. GraphQL API for clients (Hot Chocolate)
+4. **GraphQL API for clients (Hot Chocolate) with DataLoaders, query limits and JWT** (done)
 5. Load test with k6, bottlenecks found and fixed
 6. Signed images, Kustomize, deployment to kind in CI
 
