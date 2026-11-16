@@ -36,6 +36,8 @@ public sealed partial class ConversationService(
     public const string BudgetReply =
         "This conversation has reached its limit. Please start a new one to keep shopping.";
 
+    public const string NoAnswerReply = "I couldn't come up with an answer to that. Could you rephrase what you are looking for?";
+
     private const string RemovedFromHistory = "[message withheld by the input filter]";
     private const int MaxReplyCharacters = 4000;
 
@@ -97,6 +99,11 @@ public sealed partial class ConversationService(
         else if (reply.Length > MaxReplyCharacters)
         {
             reply = reply[..MaxReplyCharacters];
+        }
+        else if (reply.Length == 0)
+        {
+            // The model declined, ran out of output, or used up its tool rounds without answering.
+            reply = NoAnswerReply;
         }
 
         if (tools.NeutralizedTexts > 0)

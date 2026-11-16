@@ -20,8 +20,11 @@ public sealed class AssistantOptions
 
     public int MaxInputCharacters { get; set; } = 2000;
 
-    /// <summary>Cap on what the model may write per call, so one turn has a bounded cost.</summary>
-    public int MaxOutputTokens { get; set; } = 1024;
+    /// <summary>
+    /// Cap on what the model may produce per call, so one turn has a bounded cost. Models that
+    /// think before answering spend part of it on thinking, so it is not set tight.
+    /// </summary>
+    public int MaxOutputTokens { get; set; } = 4096;
 
     /// <summary>How many times the model may go back to the tools within one turn.</summary>
     public int MaxToolRounds { get; set; } = 6;
