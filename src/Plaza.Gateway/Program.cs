@@ -13,6 +13,9 @@ using Plaza.ServiceDefaults;
 var builder = WebApplication.CreateBuilder(args);
 var development = builder.Environment.IsDevelopment();
 
+// A GraphQL request is a query and a few variables; nothing legitimate is larger than this.
+builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = 256 * 1024);
+
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 builder.Services.TryAddSingleton(TimeProvider.System);
