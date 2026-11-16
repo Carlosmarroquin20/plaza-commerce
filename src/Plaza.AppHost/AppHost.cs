@@ -1,6 +1,7 @@
 // Local development environment (ADR 0002): one PostgreSQL server with a database per service,
 // a Redpanda broker, the five services, the simulated payment provider (ADR 0010), the shopping
-// assistant, the MCP server, and the Aspire dashboard collecting their telemetry.
+// assistant, the MCP server, the public GraphQL gateway, and the Aspire dashboard collecting their
+// telemetry.
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -30,7 +31,7 @@ var inventory = builder.AddProject<Projects.Plaza_Inventory>("inventory")
     .WithReference(inventoryDb, connectionName: "inventory").WaitFor(inventoryDb)
     .WithReference(kafka).WaitFor(kafka);
 
-builder.AddProject<Projects.Plaza_Orders>("orders")
+var orders = builder.AddProject<Projects.Plaza_Orders>("orders")
     .WithReference(ordersDb, connectionName: "orders").WaitFor(ordersDb)
     .WithReference(kafka).WaitFor(kafka)
     .WithReference(catalog).WaitFor(catalog);
@@ -49,7 +50,7 @@ builder.AddProject<Projects.Plaza_Notifications>("notifications")
     .WithReference(kafka).WaitFor(kafka);
 
 // The assistant runs on the scripted model unless Assistant__Provider says otherwise (ADR 0012).
-builder.AddProject<Projects.Plaza_Assistant>("assistant")
+var assistant = builder.AddProject<Projects.Plaza_Assistant>("assistant")
     .WithReference(assistantDb, connectionName: "assistant").WaitFor(assistantDb)
     .WithReference(catalog).WaitFor(catalog)
     .WithReference(inventory).WaitFor(inventory);
@@ -57,5 +58,12 @@ builder.AddProject<Projects.Plaza_Assistant>("assistant")
 builder.AddProject<Projects.Plaza_Mcp>("mcp")
     .WithReference(catalog).WaitFor(catalog)
     .WithReference(inventory).WaitFor(inventory);
+
+// The public API (ADR 0017). Everything above is internal; clients talk to this.
+builder.AddProject<Projects.Plaza_Gateway>("gateway")
+    .WithReference(catalog).WaitFor(catalog)
+    .WithReference(inventory).WaitFor(inventory)
+    .WithReference(orders).WaitFor(orders)
+    .WithReference(assistant).WaitFor(assistant);
 
 builder.Build().Run();
