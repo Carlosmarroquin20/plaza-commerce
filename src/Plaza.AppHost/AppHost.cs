@@ -75,6 +75,12 @@ var gateway = builder.AddProject<Projects.Plaza_Gateway>("gateway")
 
 if (loadTest)
 {
+    // Keep one trace in twenty: enough to see what is slow without paying for every span.
+    foreach (var project in builder.Resources.OfType<ProjectResource>())
+    {
+        builder.CreateResourceBuilder(project).WithEnvironment("Telemetry__TraceSampleRatio", "0.05");
+    }
+
     gateway.WithEnvironment("GraphQL__RequestsPerMinute", "100000000");
     assistant.WithEnvironment("Assistant__RequestsPerMinute", "100000000");
 }

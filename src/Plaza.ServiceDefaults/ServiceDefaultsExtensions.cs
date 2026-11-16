@@ -66,6 +66,16 @@ public static class ServiceDefaultsExtensions
 
     private static void AddTelemetry(this IHostApplicationBuilder builder)
     {
+        // HttpClient writes four log lines for every outgoing call. On a service that makes two
+        // or three calls per request that is most of what it logs, and shipping it costs more
+        // than it tells: the same calls are already spans in the trace (ADR 0020).
+        builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
+
+        // Every request is traced by default, which is what a developer wants. Under load,
+        // exporting every span is real work; Telemetry:TraceSampleRatio keeps a fraction of the
+        // traces, decided at the first service and followed by the rest.
+        var sampleRatio = Math.Clamp(builder.Configuration.GetValue("Telemetry:TraceSampleRatio", 1.0), 0.0, 1.0);
+
         builder.Logging.AddOpenTelemetry(logging =>
         {
             logging.IncludeFormattedMessage = true;
@@ -78,6 +88,7 @@ public static class ServiceDefaultsExtensions
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation())
             .WithTracing(tracing => tracing
+                .SetSampler(new ParentBasedSampler(new TraceIdRatioBasedSampler(sampleRatio)))
                 .AddSource(builder.Environment.ApplicationName)
                 .AddSource(MessagingActivitySource)
                 .AddAspNetCoreInstrumentation(o =>
