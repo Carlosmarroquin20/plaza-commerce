@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Read-only shopping operations over the Catalog and Inventory REST APIs. Shared by the
+       assistant (as model tools) and the MCP server, so both expose the same behaviour. -->
+
+</Project>

@@ -15,8 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Plaza.Assistant\Plaza.Assistant.csproj" />
     <ProjectReference Include="..\Plaza.Catalog\Plaza.Catalog.csproj" />
     <ProjectReference Include="..\Plaza.Inventory\Plaza.Inventory.csproj" />
+    <ProjectReference Include="..\Plaza.Mcp\Plaza.Mcp.csproj" />
     <ProjectReference Include="..\Plaza.Notifications\Plaza.Notifications.csproj" />
     <ProjectReference Include="..\Plaza.Orders\Plaza.Orders.csproj" />
     <ProjectReference Include="..\Plaza.PaymentProvider\Plaza.PaymentProvider.csproj" />

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <PackageReference Include="Anthropic" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="OllamaSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Plaza.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Plaza.ServiceDefaults\Plaza.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Plaza.Shopping\Plaza.Shopping.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Plaza.Catalog.Data;
+using Plaza.Catalog.Search;
 
 namespace Plaza.Catalog;
 
@@ -14,6 +15,8 @@ public static class ProductEndpoints
     private const int MaxPage = 100_000; // keeps (page - 1) * pageSize far from overflow
     private const int MaxPageSize = 100;
     private const int MaxBatchSize = 50;
+    private const int MaxQueryLength = 200;
+    private const int MaxSearchResults = 20;
 
     public static IEndpointRouteBuilder MapProductEndpoints(this IEndpointRouteBuilder app)
     {
@@ -21,6 +24,7 @@ public static class ProductEndpoints
         products.MapGet("/", ListAsync);
         products.MapGet("/{id:guid}", GetAsync);
         products.MapGet("/batch", GetBatchAsync);
+        products.MapGet("/search", SearchAsync);
         return app;
     }
 
@@ -70,6 +74,28 @@ public static class ProductEndpoints
             .ToListAsync(cancellationToken);
 
         return TypedResults.Ok(products);
+    }
+
+    /// <summary>Hybrid search: keywords and similarity, best matches first (ADR 0013).</summary>
+    private static async Task<Results<Ok<List<ProductSearchHit>>, ValidationProblem>> SearchAsync(
+        string? q, ProductSearch search, CancellationToken cancellationToken, int limit = 5, long? maxPriceCents = null, string? mode = null)
+    {
+        var searchMode = SearchMode.Hybrid;
+        var modeIsValid = mode is null || (Enum.TryParse(mode, ignoreCase: true, out searchMode) && Enum.IsDefined(searchMode));
+        if (!modeIsValid || string.IsNullOrWhiteSpace(q) || q.Length > MaxQueryLength
+            || limit is < 1 or > MaxSearchResults || maxPriceCents is < 0)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["search"] =
+                [
+                    $"q is required (at most {MaxQueryLength} characters), limit must be between 1 and {MaxSearchResults} " +
+                    "maxPriceCents cannot be negative and mode is hybrid, keyword or vector.",
+                ],
+            });
+        }
+
+        return TypedResults.Ok(await search.SearchAsync(q, limit, maxPriceCents, searchMode, cancellationToken));
     }
 
     private static ProductResponse ToResponse(Product p) =>

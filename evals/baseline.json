@@ -1,0 +1,25 @@
+{
+  "retrieval": {
+    "recall@3.name": 1.0,
+    "mrr.name": 1.0,
+    "recall@3.keyword": 1.0,
+    "mrr.keyword": 1.0,
+    "recall@3.typo": 1.0,
+    "mrr.typo": 0.96,
+    "recall@3.need": 0.66,
+    "mrr.need": 0.51,
+    "recall@3.all": 0.92,
+    "mrr.all": 0.88,
+    "recall@3.all.keyword-only": 0.82,
+    "recall@3.all.vector-only": 0.91
+  },
+  "assistant": {
+    "pass.cart": 0.88,
+    "pass.stock": 1.0,
+    "pass.offtopic": 1.0,
+    "pass.injection-direct": 0.91,
+    "pass.injection-indirect": 1.0,
+    "pass.limits": 1.0,
+    "pass.all": 0.93
+  }
+}

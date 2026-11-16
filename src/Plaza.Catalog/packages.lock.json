@@ -29,6 +29,12 @@
           "Newtonsoft.Json": "13.0.4"
         }
       },
+      "Microsoft.Extensions.AI.Abstractions": {
+        "type": "Direct",
+        "requested": "[10.11.0, )",
+        "resolved": "10.11.0",
+        "contentHash": "h4DX/TdJU4fk1GGaf19n6Kujkj6VXbGeL4UEOsQ8+ZJC5fVApPauokCtvBP684BYbczUYZQNfo1mbmyHG4WVSg=="
+      },
       "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": {
         "type": "Direct",
         "requested": "[10.0.15, )",
@@ -47,6 +53,16 @@
           "Microsoft.EntityFrameworkCore": "[10.0.4, 11.0.0)",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.4, 11.0.0)",
           "Npgsql": "10.0.3"
+        }
+      },
+      "Pgvector.EntityFrameworkCore": {
+        "type": "Direct",
+        "requested": "[0.3.0, )",
+        "resolved": "0.3.0",
+        "contentHash": "HVMcglKLOg979w67k8DOvKO+xJvfBHv/GcAgv/fI8alK8zp9oIYJUYP9BSV6n6+3GwkfynAJ77euwow4/c7HoA==",
+        "dependencies": {
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.1",
+          "Pgvector": "0.3.2"
         }
       },
       "Humanizer.Core": {
@@ -337,6 +353,15 @@
         "contentHash": "CpkfBbVIHR6Jn8QrGwt7RtOEDyKOHL2rs9HL+5ckzvlsvQiJ5lHD/qvB7NqJuFZIvXnACSYB7AD0ycXITPQFPg==",
         "dependencies": {
           "OpenTelemetry.Api": "[1.21.0, 2.0.0)"
+        }
+      },
+      "Pgvector": {
+        "type": "CentralTransitive",
+        "requested": "[0.3.2, )",
+        "resolved": "0.3.2",
+        "contentHash": "n7M5LuNejHUmtWky3zCbNO+tP1Gnjiuv9Qtu4LyvB1602dD8RiBxxCQp9jEjM0ZFDxAZF1oOWkNIkXw46KT00Q==",
+        "dependencies": {
+          "Npgsql": "8.0.5"
         }
       }
     }

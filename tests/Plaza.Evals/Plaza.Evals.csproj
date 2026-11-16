@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Plaza.Assistant\Plaza.Assistant.csproj" />
+    <ProjectReference Include="..\..\src\Plaza.Catalog\Plaza.Catalog.csproj" />
+    <ProjectReference Include="..\..\src\Plaza.Inventory\Plaza.Inventory.csproj" />
+    <ProjectReference Include="..\..\src\Plaza.Mcp\Plaza.Mcp.csproj" />
+    <ProjectReference Include="..\Plaza.Testing\Plaza.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\evals\**\*" Link="evals\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

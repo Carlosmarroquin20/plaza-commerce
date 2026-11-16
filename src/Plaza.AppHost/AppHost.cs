@@ -1,13 +1,14 @@
 // Local development environment (ADR 0002): one PostgreSQL server with a database per service,
-// a Redpanda broker, the five services, the simulated payment provider (ADR 0010), and the
-// Aspire dashboard collecting their telemetry.
+// a Redpanda broker, the five services, the simulated payment provider (ADR 0010), the shopping
+// assistant, the MCP server, and the Aspire dashboard collecting their telemetry.
 
 var builder = DistributedApplication.CreateBuilder(args);
 
 // Images are pinned by digest; the tag is kept for readability.
 var postgres = builder.AddPostgres("postgres")
-    .WithImage("postgres", "18.7-alpine")
-    .WithImageSHA256("b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015");
+    // PostgreSQL 18 with pgvector, used by the catalogue's hybrid search (ADR 0013).
+    .WithImage("pgvector/pgvector", "0.8.7-pg18-trixie")
+    .WithImageSHA256("ab49524d18df7200b74ac9a475e1db6297fc1eb57da4c214c63d10ecc4b754fa");
 
 var kafka = builder.AddRedPanda("kafka")
     .WithImage("redpandadata/redpanda", "v26.2.7")
@@ -19,12 +20,13 @@ var inventoryDb = postgres.AddDatabase("inventory-db", databaseName: "inventory"
 var ordersDb = postgres.AddDatabase("orders-db", databaseName: "orders");
 var paymentsDb = postgres.AddDatabase("payments-db", databaseName: "payments");
 var notificationsDb = postgres.AddDatabase("notifications-db", databaseName: "notifications");
+var assistantDb = postgres.AddDatabase("assistant-db", databaseName: "assistant");
 var paymentProviderDb = postgres.AddDatabase("payment-provider-db", databaseName: "payment_provider");
 
 var catalog = builder.AddProject<Projects.Plaza_Catalog>("catalog")
     .WithReference(catalogDb, connectionName: "catalog").WaitFor(catalogDb);
 
-builder.AddProject<Projects.Plaza_Inventory>("inventory")
+var inventory = builder.AddProject<Projects.Plaza_Inventory>("inventory")
     .WithReference(inventoryDb, connectionName: "inventory").WaitFor(inventoryDb)
     .WithReference(kafka).WaitFor(kafka);
 
@@ -45,5 +47,15 @@ builder.AddProject<Projects.Plaza_Payments>("payments")
 builder.AddProject<Projects.Plaza_Notifications>("notifications")
     .WithReference(notificationsDb, connectionName: "notifications").WaitFor(notificationsDb)
     .WithReference(kafka).WaitFor(kafka);
+
+// The assistant runs on the scripted model unless Assistant__Provider says otherwise (ADR 0012).
+builder.AddProject<Projects.Plaza_Assistant>("assistant")
+    .WithReference(assistantDb, connectionName: "assistant").WaitFor(assistantDb)
+    .WithReference(catalog).WaitFor(catalog)
+    .WithReference(inventory).WaitFor(inventory);
+
+builder.AddProject<Projects.Plaza_Mcp>("mcp")
+    .WithReference(catalog).WaitFor(catalog)
+    .WithReference(inventory).WaitFor(inventory);
 
 builder.Build().Run();
