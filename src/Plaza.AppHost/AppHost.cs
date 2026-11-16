@@ -5,6 +5,11 @@
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+// A load generator is one address sending the traffic of thousands of clients. With
+// --Plaza:LoadTest=true the per-caller rate limits are lifted so that it is the system that is
+// measured and not its rate limiter (ADR 0020).
+var loadTest = string.Equals(builder.Configuration["Plaza:LoadTest"], "true", StringComparison.OrdinalIgnoreCase);
+
 // Images are pinned by digest; the tag is kept for readability.
 var postgres = builder.AddPostgres("postgres")
     // PostgreSQL 18 with pgvector, used by the catalogue's hybrid search (ADR 0013).
@@ -60,10 +65,16 @@ builder.AddProject<Projects.Plaza_Mcp>("mcp")
     .WithReference(inventory).WaitFor(inventory);
 
 // The public API (ADR 0017). Everything above is internal; clients talk to this.
-builder.AddProject<Projects.Plaza_Gateway>("gateway")
+var gateway = builder.AddProject<Projects.Plaza_Gateway>("gateway")
     .WithReference(catalog).WaitFor(catalog)
     .WithReference(inventory).WaitFor(inventory)
     .WithReference(orders).WaitFor(orders)
     .WithReference(assistant).WaitFor(assistant);
+
+if (loadTest)
+{
+    gateway.WithEnvironment("GraphQL__RequestsPerMinute", "100000000");
+    assistant.WithEnvironment("Assistant__RequestsPerMinute", "100000000");
+}
 
 builder.Build().Run();

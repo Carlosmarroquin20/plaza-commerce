@@ -1,0 +1,155 @@
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:11:36Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:13:05Z" level=info msg="flash product stock after the sale: available=0 reserved=0" source=console
+
+
+  █ THRESHOLDS 
+
+    checkout_time_to_final
+    ✗ 'p(95)<5000' p(95)=1m4s
+
+    flash_orders_confirmed
+    ✓ 'count==100' count=100
+
+    flash_orders_other
+    ✗ 'count==0' count=61
+
+    graphql_errors
+    ✗ 'rate<0.01' rate=28.60%
+
+    http_req_duration{scenario:browse}
+    ✗ 'p(95)<300' p(95)=11.64s
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.69%
+
+    orders_not_final_in_time
+    ✗ 'count==0' count=390
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 12319  69.065658/s
+    checks_succeeded...: 61.13% 7531 out of 12319
+    checks_failed......: 38.86% 4788 out of 12319
+
+    ✗ search returned products
+      ↳  64% — ✓ 3933 / ✗ 2161
+    ✗ catalogue page returned
+      ↳  64% — ✓ 2611 / ✗ 1464
+    ✗ order confirmed
+      ↳  45% — ✓ 987 / ✗ 1163
+
+    CUSTOM
+    checkout_time_to_final.........: avg=22.75s min=274ms  med=1.85s p(90)=1m3s   p(95)=1m4s   p(99)=1m5s   max=1m7s   count=1256 
+    flash_orders_confirmed.........: 100    0.560643/s
+    flash_orders_other.............: 61     0.341992/s
+    flash_orders_rejected..........: 139    0.779294/s
+    graphql_errors.................: 28.60% 8456 out of 29564
+    orders_confirmed...............: 987    5.53355/s
+    orders_not_final_in_time.......: 390    2.186509/s
+    orders_placed..................: 1649   9.245009/s
+
+    HTTP
+    http_req_duration..............: avg=3.22s  min=0s     med=1.24s p(90)=8.69s  p(95)=10.3s  p(99)=12.06s max=15.29s count=30085
+      { expected_response:true }...: avg=3.18s  min=1.4ms  med=1.23s p(90)=8.6s   p(95)=10.1s  p(99)=11.93s max=14.87s count=29876
+      { scenario:browse }..........: avg=4.15s  min=0s     med=4.01s p(90)=9.44s  p(95)=11.64s p(99)=15.03s max=15.29s count=10169
+    http_req_failed................: 0.69%  209 out of 30085
+    http_reqs......................: 30085  168.669562/s
+
+    EXECUTION
+    dropped_iterations.............: 1716   9.62064/s
+    iteration_duration.............: avg=8.01s  min=8.39ms med=4.64s p(90)=11.88s p(95)=1m0s   p(99)=1m4s   max=1m10s  count=12619
+    iterations.....................: 12619  70.747589/s
+    vus............................: 7      min=0             max=1933
+    vus_max........................: 2006   min=500           max=2006
+
+    NETWORK
+    data_received..................: 28 MB  155 kB/s
+    data_sent......................: 14 MB  76 kB/s
+
+
+
+time="2026-11-16T21:13:05Z" level=error msg="thresholds on metrics 'checkout_time_to_final, flash_orders_other, graphql_errors, http_req_duration{scenario:browse}, orders_not_final_in_time' have been crossed"
