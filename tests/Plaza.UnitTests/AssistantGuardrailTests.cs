@@ -1,6 +1,7 @@
 using Microsoft.Extensions.AI;
 using Plaza.Assistant;
 using Plaza.Assistant.Models;
+using Plaza.Shopping;
 using Xunit;
 
 namespace Plaza.UnitTests;
