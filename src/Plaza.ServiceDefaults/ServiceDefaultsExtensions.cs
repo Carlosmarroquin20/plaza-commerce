@@ -31,7 +31,12 @@ public static class ServiceDefaultsExtensions
             .AddCheck("self", () => HealthCheckResult.Healthy(), [LiveTag]);
 
         builder.Services.AddServiceDiscovery();
-        builder.Services.ConfigureHttpClientDefaults(http => http.AddServiceDiscovery());
+        builder.Services.ConfigureHttpClientDefaults(http =>
+        {
+            // Timeouts, retries of safe requests and a circuit breaker on every call (ADR 0022).
+            http.AddPlazaResilience(builder.Configuration);
+            http.AddServiceDiscovery();
+        });
 
         return builder;
     }
