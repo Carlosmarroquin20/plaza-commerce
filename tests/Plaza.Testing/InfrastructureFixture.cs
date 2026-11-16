@@ -9,8 +9,9 @@ namespace Plaza.Testing;
 /// <summary>Container images used by tests, pinned by digest.</summary>
 public static class ContainerImages
 {
+    /// <summary>PostgreSQL 18 with the pgvector extension, which the catalogue search needs.</summary>
     public const string Postgres =
-        "postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015";
+        "pgvector/pgvector:0.8.7-pg18-trixie@sha256:ab49524d18df7200b74ac9a475e1db6297fc1eb57da4c214c63d10ecc4b754fa";
 
     public const string Redpanda =
         "redpandadata/redpanda:v26.2.7@sha256:43545ee03966431f5451e0b3c1e651b39fbe3eb383360220311021f50133b649";

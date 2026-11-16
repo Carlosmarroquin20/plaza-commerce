@@ -6,8 +6,9 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // Images are pinned by digest; the tag is kept for readability.
 var postgres = builder.AddPostgres("postgres")
-    .WithImage("postgres", "18.7-alpine")
-    .WithImageSHA256("b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015");
+    // PostgreSQL 18 with pgvector, used by the catalogue's hybrid search (ADR 0013).
+    .WithImage("pgvector/pgvector", "0.8.7-pg18-trixie")
+    .WithImageSHA256("ab49524d18df7200b74ac9a475e1db6297fc1eb57da4c214c63d10ecc4b754fa");
 
 var kafka = builder.AddRedPanda("kafka")
     .WithImage("redpandadata/redpanda", "v26.2.7")
