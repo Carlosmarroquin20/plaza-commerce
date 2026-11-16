@@ -87,7 +87,9 @@ export const options = {
     'http_req_failed': ['rate<0.01'],
     'graphql_errors': ['rate<0.01'],
     'http_req_duration{scenario:browse}': ['p(95)<300'],
-    'checkout_time_to_final': ['p(95)<5000'],
+    // Ordinary checkouts, and separately the queue of buyers for the one scarce product.
+    'checkout_time_to_final{scenario:checkout}': ['p(95)<5000'],
+    'checkout_time_to_final{scenario:flash_sale}': ['p(95)<30000'],
     'orders_not_final_in_time': ['count==0'],
     // Correctness under load: exactly the units that exist are sold, never one more.
     'flash_orders_confirmed': [`count==${Math.min(FLASH_STOCK, FLASH_BUYERS)}`],

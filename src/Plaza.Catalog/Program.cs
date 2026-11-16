@@ -21,6 +21,9 @@ builder.Services.AddHealthChecks().AddDbContextCheck<CatalogDbContext>();
 builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>, HashingEmbeddingGenerator>();
 builder.Services.AddScoped<ProductSearch>();
 
+// In-memory today; the same API takes a distributed cache when Catalog runs as several instances.
+builder.Services.AddHybridCache();
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
