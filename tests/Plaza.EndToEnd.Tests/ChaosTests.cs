@@ -31,6 +31,10 @@ public class ChaosPlazaSystem : PlazaSystem
         await WarmUpAsync();
     }
 
+    public Task PauseKafkaAsync() => Containers.PauseKafkaAsync();
+
+    public Task UnpauseKafkaAsync() => Containers.UnpauseKafkaAsync();
+
     public Task StopKafkaAsync() => Containers.StopKafkaAsync();
 
     public Task StartKafkaAsync() => Containers.StartKafkaAsync();
@@ -123,14 +127,15 @@ public sealed class ChaosTests : IClassFixture<ChaosPlazaSystem>
         const int duringOutage = 10;
         const int stock = 100;
         await _plaza.SetStockAsync(SeedProducts.Monitor24, stock);
-        // A slow provider keeps the first orders in the middle of their checkout long enough
-        // for the broker to go down under them.
+        // A slow provider keeps the first orders in the middle of their checkout.
         _plaza.Chaos.FirstAttempts(Fault.AnswerLost, 2);
 
         var first = await Task.WhenAll(Enumerable.Range(0, beforeOutage).Select(_ =>
             _plaza.PlaceOrderAsync(GoodToken, new PlaceOrderLine(SeedProducts.Monitor24, 1))));
 
-        await _plaza.StopKafkaAsync();
+        // The broker stops answering at once, as in a hang or a network cut. A clean shutdown
+        // takes seconds, in which these orders would simply finish.
+        await _plaza.PauseKafkaAsync();
 
         var inFlight = (await Task.WhenAll(first.Select(o => _plaza.GetOrderAsync(o.Id))))
             .Count(o => !PlazaSystem.FinalStatuses.Contains(o.Status));
@@ -149,6 +154,9 @@ public sealed class ChaosTests : IClassFixture<ChaosPlazaSystem>
             await Task.WhenAll(second.Select(o => _plaza.GetOrderAsync(o.Id))),
             order => Assert.Equal("Pending", order.Status));
 
+        // Now the real restart: the frozen broker is stopped and started again from its disk.
+        await _plaza.UnpauseKafkaAsync();
+        await _plaza.StopKafkaAsync();
         await _plaza.StartKafkaAsync();
 
         var final = await Task.WhenAll(first.Concat(second).Select(o =>
