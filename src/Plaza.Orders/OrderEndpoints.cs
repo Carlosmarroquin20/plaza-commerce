@@ -6,6 +6,7 @@ using Plaza.Contracts;
 using Plaza.Messaging;
 using Plaza.Orders.Data;
 using Plaza.Orders.Domain;
+using Plaza.ServiceDefaults;
 
 namespace Plaza.Orders;
 
@@ -77,7 +78,7 @@ public static partial class OrderEndpoints
         {
             products = await catalog.GetProductsAsync(quantities.Keys, cancellationToken);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
+        catch (Exception ex) when (HttpResilience.IsUnavailable(ex, cancellationToken))
         {
             return TypedResults.Problem(
                 title: "Catalog is unavailable", statusCode: StatusCodes.Status503ServiceUnavailable);

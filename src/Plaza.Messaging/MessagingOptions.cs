@@ -19,6 +19,12 @@ public sealed class MessagingOptions
 
     public int OutboxBatchSize { get; set; } = 100;
 
-    /// <summary>Partitions for topics created at startup. Existing topics are left as they are.</summary>
-    public int TopicPartitions { get; set; } = 3;
+    /// <summary>
+    /// Partitions for topics created at startup. Existing topics are left as they are. It is
+    /// also the most messages a consumer handles at once: one per partition (ADR 0021).
+    /// </summary>
+    public int TopicPartitions { get; set; } = 12;
+
+    /// <summary>Messages read ahead per partition while its worker is busy.</summary>
+    public int PartitionQueueLength { get; set; } = 64;
 }

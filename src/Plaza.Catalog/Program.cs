@@ -13,13 +13,16 @@ builder.Services.AddProblemDetails();
 // The connection string is read when the context is first resolved, so hosts that supply
 // configuration late (integration tests) are honoured.
 builder.Services.AddDbContext<CatalogDbContext>((services, options) => options
-    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetConnectionString("catalog"), npgsql => npgsql.UseVector())
+    .UseNpgsql(services.GetRequiredService<IConfiguration>().GetPlazaConnectionString("catalog"), npgsql => npgsql.UseVector())
     .UseSnakeCaseNamingConvention());
 builder.Services.AddHealthChecks().AddDbContextCheck<CatalogDbContext>();
 
 // The embedding model is swappable behind this interface; the default needs no model at all.
 builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>, HashingEmbeddingGenerator>();
 builder.Services.AddScoped<ProductSearch>();
+
+// In-memory today; the same API takes a distributed cache when Catalog runs as several instances.
+builder.Services.AddHybridCache();
 
 var app = builder.Build();
 

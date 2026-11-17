@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Plaza.Assistant.Data;
+using Plaza.ServiceDefaults;
 using Plaza.Shopping;
 
 namespace Plaza.Assistant;
@@ -58,7 +59,7 @@ public static class AssistantEndpoints
             return TypedResults.Problem(
                 title: "The conversation is busy", detail: "Send one message at a time.", statusCode: StatusCodes.Status409Conflict);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
+        catch (Exception ex) when (HttpResilience.IsUnavailable(ex, cancellationToken))
         {
             return TypedResults.Problem(
                 title: "The assistant is unavailable", statusCode: StatusCodes.Status503ServiceUnavailable);

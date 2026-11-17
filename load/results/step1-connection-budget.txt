@@ -1,0 +1,97 @@
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:15Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:20:16Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-16T21:21:44Z" level=info msg="flash product stock after the sale: available=0 reserved=100" source=console
+
+
+  █ THRESHOLDS 
+
+    checkout_time_to_final
+    ✗ 'p(95)<5000' p(95)=47.1s
+
+    flash_orders_confirmed
+    ✗ 'count==100' count=0
+
+    flash_orders_other
+    ✗ 'count==0' count=300
+
+    graphql_errors
+    ✓ 'rate<0.01' rate=0.03%
+
+    http_req_duration{scenario:browse}
+    ✗ 'p(95)<300' p(95)=2.01s
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.03%
+
+    orders_not_final_in_time
+    ✗ 'count==0' count=948
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 12499  67.485012/s
+    checks_succeeded...: 94.59% 11824 out of 12499
+    checks_failed......: 5.40%  675 out of 12499
+
+    ✗ search returned products
+      ↳  99% — ✓ 6632 / ✗ 3
+    ✗ catalogue page returned
+      ↳  99% — ✓ 4405 / ✗ 1
+    ✗ order confirmed
+      ↳  53% — ✓ 787 / ✗ 671
+
+    CUSTOM
+    checkout_time_to_final.........: avg=8.01s    min=281ms  med=1.01s p(90)=33.48s p(95)=47.1s p(99)=58.73s max=1m1s  count=817  
+    flash_orders_confirmed.........: 0     0/s
+    flash_orders_other.............: 300   1.61977/s
+    graphql_errors.................: 0.03% 27 out of 82644
+    orders_confirmed...............: 787   4.249196/s
+    orders_not_final_in_time.......: 948   5.118473/s
+    orders_placed..................: 2221  11.991696/s
+
+    HTTP
+    http_req_duration..............: avg=1s       min=0s     med=1.08s p(90)=1.86s  p(95)=1.99s p(99)=2.4s   max=2.88s count=83165
+      { expected_response:true }...: avg=1s       min=2.06ms med=1.08s p(90)=1.86s  p(95)=1.99s p(99)=2.4s   max=2.88s count=83138
+      { scenario:browse }..........: avg=931.67ms min=0s     med=1.11s p(90)=1.9s   p(95)=2.01s p(99)=2.39s  max=2.5s  count=11041
+    http_req_failed................: 0.03% 27 out of 83165
+    http_reqs......................: 83165 449.027204/s
+
+    EXECUTION
+    dropped_iterations.............: 1083  5.847369/s
+    iteration_duration.............: avg=6.27s    min=8.77ms med=1.16s p(90)=2.4s   p(95)=1m0s  p(99)=1m20s  max=1m21s count=12799
+    iterations.....................: 12799 69.104782/s
+    vus............................: 460   min=0           max=1509
+    vus_max........................: 1572  min=500         max=1572
+
+    NETWORK
+    data_received..................: 32 MB 173 kB/s
+    data_sent......................: 42 MB 229 kB/s
+
+
+
+time="2026-11-16T21:21:45Z" level=error msg="Error: Stock is inconsistent after the sale: {\"available\":0,\"reserved\":100,\"productId\":\"a0000000-0000-4000-8000-000000000020\"}\n\tat teardown (file:///load/black-friday.js:223:11(44))\n" hint="script exception" source=stacktrace

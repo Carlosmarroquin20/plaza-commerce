@@ -36,6 +36,11 @@ public sealed class InfrastructureFixture(bool withKafka = true, bool restartabl
     public Task StartAsync() =>
         _redpanda is null ? _postgres.StartAsync() : Task.WhenAll(_postgres.StartAsync(), _redpanda.StartAsync());
 
+    /// <summary>Freezes the broker at once: it stops answering without having shut down.</summary>
+    public Task PauseKafkaAsync() => Redpanda.PauseAsync();
+
+    public Task UnpauseKafkaAsync() => Redpanda.UnpauseAsync();
+
     /// <summary>Stops the broker process. Topics, messages and committed offsets stay on its disk.</summary>
     public Task StopKafkaAsync() => Redpanda.StopAsync();
 

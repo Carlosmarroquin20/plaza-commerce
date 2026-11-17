@@ -5,11 +5,18 @@
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+// A load generator is one address sending the traffic of thousands of clients. With
+// --Plaza:LoadTest=true the per-caller rate limits are lifted so that it is the system that is
+// measured and not its rate limiter (ADR 0020).
+var loadTest = string.Equals(builder.Configuration["Plaza:LoadTest"], "true", StringComparison.OrdinalIgnoreCase);
+
 // Images are pinned by digest; the tag is kept for readability.
 var postgres = builder.AddPostgres("postgres")
     // PostgreSQL 18 with pgvector, used by the catalogue's hybrid search (ADR 0013).
     .WithImage("pgvector/pgvector", "0.8.7-pg18-trixie")
-    .WithImageSHA256("ab49524d18df7200b74ac9a475e1db6297fc1eb57da4c214c63d10ecc4b754fa");
+    .WithImageSHA256("ab49524d18df7200b74ac9a475e1db6297fc1eb57da4c214c63d10ecc4b754fa")
+    // Seven services with a pool of 15 each, plus headroom for tools (ADR 0020).
+    .WithArgs("-c", "max_connections=150");
 
 var kafka = builder.AddRedPanda("kafka")
     .WithImage("redpandadata/redpanda", "v26.2.7")
@@ -60,10 +67,22 @@ builder.AddProject<Projects.Plaza_Mcp>("mcp")
     .WithReference(inventory).WaitFor(inventory);
 
 // The public API (ADR 0017). Everything above is internal; clients talk to this.
-builder.AddProject<Projects.Plaza_Gateway>("gateway")
+var gateway = builder.AddProject<Projects.Plaza_Gateway>("gateway")
     .WithReference(catalog).WaitFor(catalog)
     .WithReference(inventory).WaitFor(inventory)
     .WithReference(orders).WaitFor(orders)
     .WithReference(assistant).WaitFor(assistant);
+
+if (loadTest)
+{
+    // Keep one trace in twenty: enough to see what is slow without paying for every span.
+    foreach (var project in builder.Resources.OfType<ProjectResource>())
+    {
+        builder.CreateResourceBuilder(project).WithEnvironment("Telemetry__TraceSampleRatio", "0.05");
+    }
+
+    gateway.WithEnvironment("GraphQL__RequestsPerMinute", "100000000");
+    assistant.WithEnvironment("Assistant__RequestsPerMinute", "100000000");
+}
 
 builder.Build().Run();

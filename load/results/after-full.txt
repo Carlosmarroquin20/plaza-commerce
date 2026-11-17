@@ -1,0 +1,73 @@
+time="2026-11-17T02:58:43Z" level=info msg="flash product stock after the sale: available=0 reserved=0" source=console
+
+
+  █ THRESHOLDS 
+
+    checkout_time_to_final{scenario:checkout}
+    ✗ 'p(95)<5000' p(95)=11.22s
+
+    checkout_time_to_final{scenario:flash_sale}
+    ✓ 'p(95)<30000' p(95)=16.27s
+
+    flash_orders_confirmed
+    ✓ 'count==100' count=100
+
+    flash_orders_other
+    ✓ 'count==0' count=0
+
+    graphql_errors
+    ✓ 'rate<0.01' rate=0.00%
+
+    http_req_duration{scenario:browse}
+    ✗ 'p(95)<300' p(95)=706.67ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+    orders_not_final_in_time
+    ✓ 'count==0' count=0
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 13872   94.663061/s
+    checks_succeeded...: 100.00% 13872 out of 13872
+    checks_failed......: 0.00%   0 out of 13872
+
+    ✓ search returned products
+    ✓ catalogue page returned
+    ✓ order confirmed
+
+    CUSTOM
+    checkout_time_to_final.........: avg=3.83s    min=268ms  med=1.25s    p(90)=11.56s   p(95)=13.26s   p(99)=15.8s    max=17.87s count=2997 
+      { scenario:checkout }........: avg=3.05s    min=268ms  med=926ms    p(90)=8.48s    p(95)=11.22s   p(99)=14.77s   max=17.2s  count=2667 
+      { scenario:flash_sale }......: avg=11.09s   min=2.01s  med=12.01s   p(90)=15.04s   p(95)=16.27s   p(99)=17.19s   max=17.87s count=300  
+    flash_orders_confirmed.........: 100   0.682404/s
+    flash_orders_other.............: 0     0/s
+    flash_orders_rejected..........: 200   1.364808/s
+    graphql_errors.................: 0.00% 0 out of 31501
+    orders_confirmed...............: 2667  18.19971/s
+    orders_not_final_in_time.......: 0     0/s
+    orders_placed..................: 2997  20.451643/s
+
+    HTTP
+    http_req_duration..............: avg=284.23ms min=1.35ms med=158.59ms p(90)=707.93ms p(95)=787.91ms p(99)=906.77ms max=1.95s  count=32022
+      { expected_response:true }...: avg=284.23ms min=1.35ms med=158.59ms p(90)=707.93ms p(95)=787.91ms p(99)=906.77ms max=1.95s  count=32022
+      { scenario:browse }..........: avg=179.26ms min=5.37ms med=37.58ms  p(90)=604.1ms  p(95)=706.67ms p(99)=828.46ms max=1.1s   count=11205
+    http_req_failed................: 0.00% 0 out of 32022
+    http_reqs......................: 32022 218.519358/s
+
+    EXECUTION
+    dropped_iterations.............: 166   1.13279/s
+    iteration_duration.............: avg=952.42ms min=5.78ms med=100.3ms  p(90)=1.57s    p(95)=6.45s    p(99)=13.41s   max=17.87s count=14172
+    iterations.....................: 14172 96.710273/s
+    vus............................: 2     min=0          max=499
+    vus_max........................: 659   min=500        max=659
+
+    NETWORK
+    data_received..................: 22 MB 147 kB/s
+    data_sent......................: 15 MB 99 kB/s
+
+
+
+time="2026-11-17T02:58:43Z" level=error msg="thresholds on metrics 'checkout_time_to_final{scenario:checkout}, http_req_duration{scenario:browse}' have been crossed"
