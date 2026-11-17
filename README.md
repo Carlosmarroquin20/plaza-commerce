@@ -15,6 +15,42 @@ tokens; no card data exists anywhere in the system.
 Every figure below is produced by the test suite. Reproduce with `dotnet test --solution Plaza.slnx`
 (needs Docker; containers are started by Testcontainers).
 
+### Under load (phase 5)
+
+A k6 "Black Friday" scenario: 120 browse requests/s and 30 orders/s arriving at a fixed rate,
+and at the peak 300 customers buying a product that has 100 units. Measured on one development
+laptop (Ryzen 5 4600H, 12 threads, 11.4 GB) that ran the services, PostgreSQL, Redpanda and the
+load generator together, with other applications open. The numbers compare runs with each
+other; they are not a capacity figure. How to reproduce: [`load/README.md`](load/README.md).
+Raw output of every run: [`load/results`](load/results).
+
+| Full scale | Before | After | Runs |
+|---|---|---|---|
+| GraphQL errors | 26.92% | 0.00% | `before-full`, `after-full` |
+| Browse, median / p95 | 7.66 s / 12.98 s | 37.6 ms / 707 ms | |
+| Orders not final within 60 s | 533 | 0 | |
+| Orders confirmed during the run | 921 | 2,667 | |
+| Ordinary checkout, time to final, p95 | 65 s | 11.22 s | |
+| Flash-sale buyer, time to final, p95 | 66 s | 16.27 s | |
+| Connections refused by PostgreSQL | 6,916 | 0 | counted in its log |
+| Units sold of 100, for 300 buyers | 62 confirmed, 38 still reserved at the end | 100 confirmed, 200 rejected | Inventory after the run: 0 available |
+
+| What was found | Fix | Measured effect at full scale |
+|---|---|---|
+| PostgreSQL refused thousands of connections: seven services, one server with 100 connections, a default pool of 100 each | A pool of 15 per service, 150 on the server | Errors 26.92% to 0.03%, 163 to 449 requests/s |
+| Orders drained about 45 messages/s: one message at a time, each waiting for a commit | One worker per partition, 12 partitions, order kept per order id | Orders unfinished after 60 s: 948 to 0. Confirmed: 787 to 2,464 |
+| Every visitor re-read the same catalogue pages and searches | 30 s cache in Catalog; list queries read only the columns served | Browse p95 3.06 s to 707 ms, measured together with the HTTP resilience change |
+| Tried: quieter logging and trace sampling | Kept, but it fixed nothing | Browse p95 2.66 s to 3.06 s: noise |
+| Tried: several messages per transaction | Reverted | Checkout p95 11.22 s to 55.15 s, 135 deadlocks |
+
+Two thresholds are still missed at full scale, both during the flash sale: browse p95 (707 ms
+against 300 ms) and ordinary checkout p95 (11.22 s against 5 s). The same code **without** the
+burst passes every threshold at full scale: browse p95 52 ms, checkout p95 1.15 s, no errors
+(`after-full-no-flash`). What is left is one hot product: 300 reservations of the same row
+queue behind each other, and other orders wait behind them.
+
+Stock was never oversold in any run, before or after.
+
 ### Public GraphQL API (phase 4)
 
 Measured by `GraphQlTests`, which run the gateway in front of the real services and record
@@ -83,13 +119,10 @@ Plaza believes happened. Each test also proves that its fault really occurred.
 | A message that cannot be processed does not block its partition and is not dropped | After 4 failed attempts it is on the dead-letter topic with the reason attached, and the next message is processed | `ConsumerTests.Message_that_always_fails...` |
 | A trace survives the hop through the outbox and Kafka | The handler's span has the trace id and parent span id of the request that enqueued the message | `ConsumerTests.Handler_runs_in_the_trace...` |
 
-Test suite at the end of phase 4: **199 tests, 0 failures** (106 unit, 18 messaging, 13 inventory,
+Test suite at the end of phase 5: **207 tests, 0 failures** (114 unit, 18 messaging, 13 inventory,
 15 payment provider, 13 evals and assistant, 34 end-to-end including 18 for the GraphQL API).
-Counted by the test runner's summary; one full run took 2 min 56 s on the development laptop,
-containers included.
-
-There are no latency or throughput numbers yet. They belong to the load-test phase and will be
-added here only when measured.
+Counted by the test runner's summary; one full run took 2 min 11 s on the development laptop,
+containers included. The load test is separate and is not part of this count.
 
 ## Architecture
 
@@ -199,8 +232,19 @@ Pending --StockReserved--> AwaitingPayment --PaymentSucceeded--> Confirmed
 - **Tracing.** The W3C trace context is stored with the outbox row and sent as a Kafka header;
   the consumer continues the trace.
 
-### The public API
+### Under load
 
+- **A connection budget.** Each service has a bounded share of the database's connections, so
+  a busy service waits for its own instead of exhausting the server for everyone.
+- **Parallel consumers.** A consumer handles each partition with its own worker. Messages of
+  one order stay in order; different orders proceed in parallel.
+- **Cached catalogue reads.** Pages and searches are served from memory for 30 s. Stock and the
+  prices used to charge an order are always read fresh.
+- **Resilient internal calls.** Every HTTP call between services has a timeout per attempt,
+  retries for requests that are safe to repeat, and a circuit breaker that stops calling a
+  service that is down.
+
+### The public API
 - **One GraphQL endpoint.** `Plaza.Gateway` is the only service meant to be reachable from
   outside. It holds no data; every field is resolved from an internal REST API.
 - **DataLoaders.** Stock and products are requested by key and fetched in one batched call
@@ -309,7 +353,7 @@ dotnet test --solution Plaza.slnx
 
 | Project | What it covers | Needs Docker |
 |---|---|---|
-| `Plaza.UnitTests` | Order state machine, request validation, charge simulator, message contracts, assistant guardrails, embedder | No |
+| `Plaza.UnitTests` | Order state machine, request validation, charge simulator, message contracts, assistant guardrails, embedder, HTTP resilience | No |
 | `Plaza.Messaging.Tests` | Outbox, inbox, retries, dead-letter topic, trace propagation | Yes |
 | `Plaza.Inventory.Tests` | Stock reservation, commit and release under concurrency | Yes |
 | `Plaza.PaymentProvider.Tests` | Idempotency keys and voids of the simulated provider | Yes |
@@ -337,6 +381,7 @@ src/
 tests/                   See "Test it"
 docs/adr/                Architecture decision records
 seed/                    Invented demo catalogue
+load/                    k6 load test and the results of every run
 evals/                   Labelled cases and the quality baseline
 ```
 
@@ -365,6 +410,9 @@ Each significant decision has a record with the alternatives that were rejected:
 | [0017](docs/adr/0017-graphql-for-clients-rest-between-services.md) | GraphQL for clients, REST between services, events for the checkout |
 | [0018](docs/adr/0018-identity-at-the-edge-with-jwt.md) | Callers are identified at the gateway with JWT; ownership is enforced there |
 | [0019](docs/adr/0019-graphql-query-limits-and-batching.md) | GraphQL queries are batched with DataLoaders and bounded in depth and cost |
+| [0020](docs/adr/0020-load-test-method-and-what-it-found.md) | Load test: an open-model Black Friday scenario, and what it found |
+| [0021](docs/adr/0021-one-consumer-worker-per-partition.md) | A consumer handles partitions in parallel, each in order |
+| [0022](docs/adr/0022-timeouts-retries-and-circuit-breakers-on-internal-http-calls.md) | Internal HTTP calls get timeouts, retries of safe requests and a circuit breaker |
 
 ## Security
 
@@ -394,6 +442,12 @@ Each significant decision has a record with the alternatives that were rejected:
 
 ### Known limits of this phase
 
+- **One hot product slows everyone down.** A burst of buyers for a single product serialises on
+  its stock row and delays other checkouts by about ten seconds in the load test. Splitting a
+  product's stock or queueing its reservations separately is the next step.
+- **The load numbers come from one laptop.** They show what changed between runs, not what the
+  system does on servers. The load test is not part of CI.
+- **Cached catalogue data can be 30 seconds old,** and the cache is per Catalog instance.
 - **Only the gateway authenticates.** The internal REST APIs, the simulated provider and the MCP
   server trust whoever reaches them: directly, anyone can read any order, place one for any
   customer or change stock. Only the gateway may be exposed; restricting the network is part of
@@ -433,7 +487,7 @@ Each significant decision has a record with the alternatives that were rejected:
 2. **Checkout saga with compensations, order deadline, payment idempotency keys, chaos tests** (done)
 3. **AI shopping assistant (Microsoft.Extensions.AI), hybrid search with pgvector, evals in CI, MCP server** (done)
 4. **GraphQL API for clients (Hot Chocolate) with DataLoaders, query limits and JWT** (done)
-5. Load test with k6, bottlenecks found and fixed
+5. **Load test with k6, bottlenecks found and fixed, resilient internal calls** (done)
 6. Signed images, Kustomize, deployment to kind in CI
 
 ## License
