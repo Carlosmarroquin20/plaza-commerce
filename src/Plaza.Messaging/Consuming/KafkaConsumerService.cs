@@ -144,162 +144,11 @@ internal sealed partial class KafkaConsumerService<TDbContext>(
         ConcurrentQueue<ConsumeResult<string, byte[]>> processed,
         CancellationToken stoppingToken)
     {
-        var batch = new List<ConsumeResult<string, byte[]>>(_options.ConsumerBatchSize);
-        await foreach (var first in queue.ReadAllAsync(stoppingToken))
+        await foreach (var result in queue.ReadAllAsync(stoppingToken))
         {
-            // Take whatever is already waiting, never wait for more: an idle partition handles
-            // each message as it comes, a busy one handles several per database commit.
-            batch.Clear();
-            batch.Add(first);
-            while (batch.Count < _options.ConsumerBatchSize && queue.TryRead(out var next))
-            {
-                batch.Add(next);
-            }
-
-            await ProcessBatchAsync(batch, stoppingToken);
-            foreach (var result in batch)
-            {
-                processed.Enqueue(result);
-            }
+            await ProcessAsync(result, stoppingToken);
+            processed.Enqueue(result);
         }
-    }
-
-    /// <summary>
-    /// Handles several messages of one partition in a single transaction (ADR 0021). The commit
-    /// is the expensive part of handling a message, and one commit for many messages is what
-    /// lets a partition keep up under load. It is all or nothing: if anything in the batch
-    /// fails, nothing is applied and every message is handled again on its own, with the
-    /// retries and the dead-letter topic of ADR 0006, so one bad message cannot take its
-    /// neighbours with it.
-    /// </summary>
-    private async Task ProcessBatchAsync(List<ConsumeResult<string, byte[]>> batch, CancellationToken cancellationToken)
-    {
-        if (batch.Count > 1)
-        {
-            var ready = new List<(ConsumeResult<string, byte[]> Result, HandlerRegistration Registration, object Message, MessageContext Context)>(batch.Count);
-            var plain = true;
-            foreach (var result in batch)
-            {
-                switch (Prepare(result, out var registration, out var message, out var context))
-                {
-                    case Readiness.Ready:
-                        ready.Add((result, registration!, message!, context!));
-                        break;
-                    case Readiness.NeedsOwnHandling:
-                        plain = false; // Malformed: the single-message path knows how to park it.
-                        break;
-                }
-            }
-
-            if (plain)
-            {
-                try
-                {
-                    await HandleBatchOnceAsync(ready, cancellationToken);
-                    return;
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    LogBatchFallback(logger, ex, batch.Count);
-                }
-            }
-        }
-
-        foreach (var result in batch)
-        {
-            await ProcessAsync(result, cancellationToken);
-        }
-    }
-
-    private enum Readiness
-    {
-        /// <summary>A message type this service has no handler for.</summary>
-        NotForThisService,
-        Ready,
-        NeedsOwnHandling,
-    }
-
-    private Readiness Prepare(
-        ConsumeResult<string, byte[]> result, out HandlerRegistration? registration, out object? message, out MessageContext? context)
-    {
-        registration = null;
-        message = null;
-        context = null;
-
-        var messageType = GetHeader(result, MessageHeaders.MessageType);
-        if (messageType is null || !registry.TryGet(messageType, out registration))
-        {
-            return Readiness.NotForThisService;
-        }
-
-        if (!Guid.TryParse(GetHeader(result, MessageHeaders.MessageId), out var messageId))
-        {
-            return Readiness.NeedsOwnHandling;
-        }
-
-        try
-        {
-            message = JsonSerializer.Deserialize(result.Message.Value, registration.MessageType, MessagingDefaults.Json);
-        }
-        catch (JsonException)
-        {
-            return Readiness.NeedsOwnHandling;
-        }
-
-        if (message is null)
-        {
-            return Readiness.NeedsOwnHandling;
-        }
-
-        var occurredAt = DateTimeOffset.TryParse(
-            GetHeader(result, MessageHeaders.OccurredAt), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed)
-            ? parsed
-            : result.Message.Timestamp.UtcDateTime;
-        context = new MessageContext(messageId, messageType, result.Message.Key ?? "", occurredAt);
-        return Readiness.Ready;
-    }
-
-    private async Task HandleBatchOnceAsync(
-        List<(ConsumeResult<string, byte[]> Result, HandlerRegistration Registration, object Message, MessageContext Context)> batch,
-        CancellationToken cancellationToken)
-    {
-        if (batch.Count == 0)
-        {
-            return;
-        }
-
-        await using var scope = scopeFactory.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<TDbContext>();
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        var now = timeProvider.GetUtcNow();
-
-        foreach (var (result, registration, message, context) in batch)
-        {
-            using var activity = StartActivity(result, context.MessageType);
-
-            var inserted = await db.Database.ExecuteSqlInterpolatedAsync($"""
-                INSERT INTO inbox_messages (consumer, message_id, processed_at)
-                VALUES ({_options.ServiceName}, {context.MessageId}, {now})
-                ON CONFLICT DO NOTHING
-                """, cancellationToken);
-
-            if (inserted == 0)
-            {
-                LogDuplicate(logger, context.MessageType, context.MessageId);
-                continue;
-            }
-
-            await registration.InvokeAsync(scope.ServiceProvider, message, context, cancellationToken);
-
-            // Flushed per message so that each handler sees what the previous ones did.
-            await db.SaveChangesAsync(cancellationToken);
-        }
-
-        await transaction.CommitAsync(cancellationToken);
     }
 
     private void StoreProcessedOffsets(IConsumer<string, byte[]> consumer, ConcurrentQueue<ConsumeResult<string, byte[]>> processed)
@@ -484,10 +333,6 @@ internal sealed partial class KafkaConsumerService<TDbContext>(
         Message = "Dead-lettering message ({Reason}) from {Topic}[{Partition}]@{Offset} after {Attempts} attempts")]
     private static partial void LogDeadLetter(
         ILogger logger, Exception? exception, string reason, string topic, int partition, long offset, int attempts);
-
-    [LoggerMessage(Level = LogLevel.Warning,
-        Message = "A batch of {Count} messages could not be applied together; handling them one by one")]
-    private static partial void LogBatchFallback(ILogger logger, Exception exception, int count);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Publishing to the dead-letter topic failed; retrying")]
     private static partial void LogDeadLetterPublishFailed(ILogger logger, Exception exception);
