@@ -1,0 +1,70 @@
+time="2026-11-17T03:01:35Z" level=info msg="flash product stock after the sale: available=99 reserved=0" source=console
+
+
+  █ THRESHOLDS 
+
+    checkout_time_to_final{scenario:checkout}
+    ✓ 'p(95)<5000' p(95)=1.15s
+
+    checkout_time_to_final{scenario:flash_sale}
+    ✓ 'p(95)<30000' p(95)=914ms
+
+    flash_orders_confirmed
+    ✓ 'count==1' count=1
+
+    flash_orders_other
+    ✓ 'count==0' count=0
+
+    graphql_errors
+    ✓ 'rate<0.01' rate=0.00%
+
+    http_req_duration{scenario:browse}
+    ✓ 'p(95)<300' p(95)=52.27ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+    orders_not_final_in_time
+    ✓ 'count==0' count=0
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 14038   96.581547/s
+    checks_succeeded...: 100.00% 14038 out of 14038
+    checks_failed......: 0.00%   0 out of 14038
+
+    ✓ search returned products
+    ✓ catalogue page returned
+    ✓ order confirmed
+
+    CUSTOM
+    checkout_time_to_final.........: avg=765.32ms min=268ms  med=827ms   p(90)=940ms   p(95)=1.15s    p(99)=1.38s   max=1.68s    count=2850 
+      { scenario:checkout }........: avg=768.79ms min=268ms  med=828ms   p(90)=942ms   p(95)=1.15s    p(99)=1.4s    max=1.68s    count=2819 
+      { scenario:flash_sale }......: avg=914ms    min=914ms  med=914ms   p(90)=914ms   p(95)=914ms    p(99)=914ms   max=914ms    count=1    
+    flash_orders_confirmed.........: 1      0.00688/s
+    flash_orders_other.............: 0      0/s
+    graphql_errors.................: 0.00%  0 out of 21826
+    orders_confirmed...............: 2819   19.394741/s
+    orders_not_final_in_time.......: 0      0/s
+    orders_placed..................: 2850   19.608022/s
+
+    HTTP
+    http_req_duration..............: avg=22.89ms  min=1.36ms med=18.2ms  p(90)=43.04ms p(95)=56.37ms  p(99)=93.85ms max=206.58ms count=22347
+      { expected_response:true }...: avg=22.89ms  min=1.36ms med=18.2ms  p(90)=43.04ms p(95)=56.37ms  p(99)=93.85ms max=206.58ms count=22347
+      { scenario:browse }..........: avg=22.18ms  min=5.67ms med=18.11ms p(90)=40.56ms p(95)=52.27ms  p(99)=85.68ms max=187.85ms count=11219
+    http_req_failed................: 0.00%  0 out of 22347
+    http_reqs......................: 22347  153.74753/s
+
+    EXECUTION
+    iteration_duration.............: avg=172.8ms  min=6.09ms med=23.11ms p(90)=828.5ms p(95)=865.68ms p(99)=1.15s   max=1.68s    count=14039
+    iterations.....................: 14039  96.588427/s
+    vus............................: 1      min=0          max=49 
+    vus_max........................: 201    min=201        max=201
+
+    NETWORK
+    data_received..................: 19 MB  134 kB/s
+    data_sent......................: 9.2 MB 63 kB/s
+
+
+

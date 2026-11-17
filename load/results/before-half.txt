@@ -1,0 +1,98 @@
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:47:21Z" level=warning msg="Request Failed" error="Post \"http://host.docker.internal:5100/graphql\": dial tcp 192.168.65.254:5100: connect: connection refused"
+time="2026-11-17T02:48:50Z" level=info msg="flash product stock after the sale: available=0 reserved=0" source=console
+
+
+  █ THRESHOLDS 
+
+    checkout_time_to_final{scenario:checkout}
+    ✓ 'p(95)<5000' p(95)=837.59ms
+
+    checkout_time_to_final{scenario:flash_sale}
+    ✗ 'p(95)<30000' p(95)=1m10s
+
+    flash_orders_confirmed
+    ✓ 'count==100' count=100
+
+    flash_orders_other
+    ✗ 'count==0' count=25
+
+    graphql_errors
+    ✗ 'rate<0.01' rate=5.33%
+
+    http_req_duration{scenario:browse}
+    ✗ 'p(95)<300' p(95)=5.27s
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.06%
+
+    orders_not_final_in_time
+    ✗ 'count==0' count=208
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 6395   34.921998/s
+    checks_succeeded...: 71.63% 4581 out of 6395
+    checks_failed......: 28.36% 1814 out of 6395
+
+    ✗ search returned products
+      ↳  78% — ✓ 2460 / ✗ 687
+    ✗ catalogue page returned
+      ↳  67% — ✓ 1513 / ✗ 716
+    ✗ order confirmed
+      ↳  59% — ✓ 608 / ✗ 411
+
+    CUSTOM
+    checkout_time_to_final.........: avg=15.36s min=272ms  med=548ms    p(90)=56.11s p(95)=59.55s   p(99)=1m10s  max=1m20s  count=913  
+      { scenario:checkout }........: avg=1.64s  min=272ms  med=539ms    p(90)=808ms  p(95)=837.59ms p(99)=39.93s max=54.35s count=608  
+      { scenario:flash_sale }......: avg=47.31s min=4.76s  med=51s      p(90)=1m7s   p(95)=1m10s    p(99)=1m13s  max=1m20s  count=275  
+    flash_orders_confirmed.........: 100   0.546083/s
+    flash_orders_other.............: 25    0.136521/s
+    flash_orders_rejected..........: 175   0.955645/s
+    graphql_errors.................: 5.33% 1709 out of 32016
+    orders_confirmed...............: 608   3.320184/s
+    orders_not_final_in_time.......: 208   1.135852/s
+    orders_placed..................: 1257  6.864261/s
+
+    HTTP
+    http_req_duration..............: avg=1.24s  min=0s     med=101.19ms p(90)=4.1s   p(95)=4.52s    p(99)=5.25s  max=10.26s count=32537
+      { expected_response:true }...: avg=1.24s  min=1.81ms med=102.3ms  p(90)=4.1s   p(95)=4.53s    p(99)=5.25s  max=10.26s count=32515
+      { scenario:browse }..........: avg=2.42s  min=8.42ms med=3.56s    p(90)=4.98s  p(95)=5.27s    p(99)=5.67s  max=6.57s  count=5376 
+    http_req_failed................: 0.06% 22 out of 32537
+    http_reqs......................: 32537 177.678975/s
+
+    EXECUTION
+    dropped_iterations.............: 492   2.686728/s
+    iteration_duration.............: avg=6.05s  min=8.75ms med=3.61s    p(90)=5.43s  p(95)=51.98s   p(99)=1m0s   max=1m20s  count=6695 
+    iterations.....................: 6695  36.560246/s
+    vus............................: 136   min=0             max=784
+    vus_max........................: 968   min=500           max=968
+
+    NETWORK
+    data_received..................: 18 MB 99 kB/s
+    data_sent......................: 16 MB 88 kB/s
+
+
+
+time="2026-11-17T02:48:51Z" level=error msg="thresholds on metrics 'checkout_time_to_final{scenario:flash_sale}, flash_orders_other, graphql_errors, http_req_duration{scenario:browse}, orders_not_final_in_time' have been crossed"
