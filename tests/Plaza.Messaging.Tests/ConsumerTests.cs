@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Plaza.Testing;
 using Xunit;
 
@@ -25,6 +26,75 @@ public sealed class ConsumerTests(Infrastructure infrastructure)
         await harness.WaitUntilDrainedAsync();
         Assert.Equal(1, await harness.CountEffectsAsync("reserve"));
         Assert.Equal(2, harness.Script.Attempts); // "reserve" once and the marker; duplicates never reach the handler
+    }
+
+    [Fact]
+    public async Task Burst_is_applied_in_order_and_shares_transactions()
+    {
+        await using var harness = await MessagingHarness.StartAsync(infrastructure);
+        var transactions = new System.Collections.Concurrent.ConcurrentBag<long>();
+        harness.Script.Run = async (message, db, _) =>
+        {
+            db.Effects.Add(new Effect { Value = message.Value });
+            if (message.Value.StartsWith("burst-", StringComparison.Ordinal))
+            {
+                transactions.Add(await db.Database.SqlQuery<long>($"SELECT txid_current() AS \"Value\"").SingleAsync());
+            }
+        };
+        var values = Enumerable.Range(0, 60).Select(i => $"burst-{i:D2}").ToList();
+
+        await harness.EnqueueManyAsync(values);
+
+        await harness.WaitUntilDrainedAsync();
+        // Every message once, in the order it was sent.
+        Assert.Equal(values, await harness.EffectsInOrderAsync("burst-"));
+        // And not one commit each: messages that were waiting together were applied together.
+        Assert.Equal(60, transactions.Count);
+        Assert.True(transactions.Distinct().Count() < 60, $"{transactions.Distinct().Count()} transactions for 60 messages");
+    }
+
+    [Fact]
+    public async Task Failing_message_in_a_burst_is_parked_without_taking_its_neighbours_along()
+    {
+        await using var harness = await MessagingHarness.StartAsync(infrastructure, o => o.MaxAttempts = 2);
+        harness.Script.Run = (message, db, _) =>
+        {
+            db.Effects.Add(new Effect { Value = message.Value });
+            return message.Value == "mixed-poison"
+                ? throw new InvalidOperationException("Simulated permanent failure.")
+                : Task.CompletedTask;
+        };
+        var good = Enumerable.Range(0, 20).Select(i => $"mixed-{i:D2}").ToList();
+
+        await harness.EnqueueManyAsync(good.Take(10).Append("mixed-poison").Concat(good.Skip(10)));
+
+        var deadLetter = Assert.Single(await harness.ReadTopicUntilAsync(harness.DeadLetterTopic, m => m.Count >= 1));
+        Assert.Equal("""{"value":"mixed-poison"}""", deadLetter.Value);
+        Assert.Equal("2", deadLetter.Headers[MessageHeaders.DltAttempts]);
+
+        await harness.WaitUntilDrainedAsync();
+        // The batch it was in was rolled back as a whole; then each message was handled alone.
+        Assert.Equal(good, await harness.EffectsInOrderAsync("mixed-"));
+    }
+
+    [Fact]
+    public async Task With_batching_off_every_message_has_its_own_transaction()
+    {
+        await using var harness = await MessagingHarness.StartAsync(infrastructure, o => o.ConsumerBatchSize = 1);
+        var transactions = new System.Collections.Concurrent.ConcurrentBag<long>();
+        harness.Script.Run = async (message, db, _) =>
+        {
+            db.Effects.Add(new Effect { Value = message.Value });
+            if (message.Value.StartsWith("single-", StringComparison.Ordinal))
+            {
+                transactions.Add(await db.Database.SqlQuery<long>($"SELECT txid_current() AS \"Value\"").SingleAsync());
+            }
+        };
+
+        await harness.EnqueueManyAsync(Enumerable.Range(0, 20).Select(i => $"single-{i:D2}"));
+
+        await harness.WaitUntilDrainedAsync();
+        Assert.Equal(20, transactions.Distinct().Count());
     }
 
     [Fact]

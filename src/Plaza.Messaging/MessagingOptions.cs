@@ -25,6 +25,12 @@ public sealed class MessagingOptions
     /// </summary>
     public int TopicPartitions { get; set; } = 12;
 
+    /// <summary>
+    /// The most messages of one partition applied in a single transaction when that many are
+    /// already waiting. 1 handles every message in its own transaction.
+    /// </summary>
+    public int ConsumerBatchSize { get; set; } = 16;
+
     /// <summary>Messages read ahead per partition while its worker is busy.</summary>
     public int PartitionQueueLength { get; set; } = 64;
 }

@@ -144,6 +144,21 @@ public sealed class MessagingHarness : IAsyncDisposable
         return id;
     });
 
+    /// <summary>Enqueues several messages in one transaction, so the consumer receives them as a burst.</summary>
+    public Task<int> EnqueueManyAsync(IEnumerable<string> values) => WithDbAsync(async db =>
+    {
+        foreach (var value in values)
+        {
+            db.EnqueueMessage(Topic, "key", new TestMessage(value));
+        }
+
+        return await db.SaveChangesAsync();
+    });
+
+    /// <summary>Values of the effects whose value starts with <paramref name="prefix"/>, in the order they were applied.</summary>
+    public Task<List<string>> EffectsInOrderAsync(string prefix) => WithDbAsync(db =>
+        db.Effects.Where(e => e.Value.StartsWith(prefix)).OrderBy(e => e.Id).Select(e => e.Value).ToListAsync());
+
     public Task<int> CountEffectsAsync(string value) =>
         WithDbAsync(db => db.Effects.CountAsync(e => e.Value == value));
 
