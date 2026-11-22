@@ -40,8 +40,8 @@
 
     <!-- Local orchestration -->
     <!-- Aspire.Hosting.AppHost comes from Aspire.AppHost.Sdk (see Plaza.AppHost.csproj). -->
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.5" />
-    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Redpanda" Version="13.6.1" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="17.0.0" />
+    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Redpanda" Version="17.0.0" />
 
     <!-- Tests -->
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.15" />
